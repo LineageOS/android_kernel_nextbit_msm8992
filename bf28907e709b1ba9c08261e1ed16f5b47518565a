@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5faad753_0312fc09",
+        "filename": "drivers/staging/qcacld-2.0/CORE/HDD/src/wlan_hdd_main.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 2971,
+      "author": {
+        "id": 3671
+      },
+      "writtenOn": "2016-06-07T00:44:18Z",
+      "side": 1,
+      "message": "missing a ; here",
+      "revId": "bf28907e709b1ba9c08261e1ed16f5b47518565a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
