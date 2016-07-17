@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3fa7e38b_6873f4e8",
+        "filename": "arch/arm64/configs/cyanogenmod_ether_defconfig",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 3917
+      },
+      "writtenOn": "2016-07-17T10:40:38Z",
+      "side": 1,
+      "message": "Looks like the EXTRA_COPY stuff is not in the ether kernel anyway. Will drop this",
+      "revId": "0a4e0e6a826da3969545d2313f348bdf3fdf7a8c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
