@@ -33,8 +33,11 @@ static int __init proc_cmdline_init(void)
 	/*
 	 * Remove 'androidboot.mode' flag from command line seen by
 	 * userspace in order to load persistent OEM specific USB functions
-	 */
-	offset_addr = strstr(cmd, "androidboot.mode=");
+	 *
+         * Remove 'androidboot.verifiedbootstate' flag from command line seen
+         * by userspace in order to pass SafetyNet CTS check.
+         */
+	offset_addr = strstr(cmd, "androidboot.mode= androidboot.verifiedbootstate=");
 	if (offset_addr) {
 		size_t i, len, offset;
 
