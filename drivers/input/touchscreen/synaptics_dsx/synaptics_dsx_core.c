@@ -4114,34 +4114,53 @@ static int fb_notifier_callback(struct notifier_block *self,
 {
 	struct fb_event *evdata = data;
 	int *blank;
+	bool disable_touch = false, previous state = false;
 	struct synaptics_rmi4_data *rmi4_data =
 		container_of(self, struct synaptics_rmi4_data, fb_notif);
 
 	if (evdata && evdata->data && rmi4_data) {
 		blank = evdata->data;
+		switch (*blank) {
+		case FB_BLANK_UNBLANK:
+		case FB_BLANK_NORMAL:
+		case FB_BLANK_VSYNC_SUSPEND:
+		case FB_BLANK_HSYNC_SUSPEND:
+			disable_touch = false;
+			break;
+		case FB_BLANK_POWERDOWN:
+		default:
+			disable_touch = true;
+			break;
+		}
+
 		if (rmi4_data->hw_if->board_data->resume_in_workqueue) {
 			if (event == FB_EARLY_EVENT_BLANK) {
 				synaptics_secure_touch_stop(rmi4_data, 0);
-				if (*blank == FB_BLANK_UNBLANK)
+				if (!disable_touch && (previous_state != disable_touch))
 					schedule_work(
 						&(rmi4_data->fb_notify_work));
+					previous_state = disable_touch;
 			} else if (event == FB_EVENT_BLANK &&
-					*blank == FB_BLANK_POWERDOWN) {
+					disable_touch && (previous_state != disable_touch)) {
 					flush_work(
 						&(rmi4_data->fb_notify_work));
 					synaptics_rmi4_suspend(
 						&(rmi4_data->input_dev->dev));
+					previous_state = disable_touch;
 			}
 		} else {
 			if (event == FB_EARLY_EVENT_BLANK) {
 				synaptics_secure_touch_stop(rmi4_data, 0);
 			} else if (event == FB_EVENT_BLANK) {
-				if (*blank == FB_BLANK_UNBLANK)
+				if (!disable_touch && (previous_state != disable_touch)) {
 					synaptics_rmi4_resume(
 						&(rmi4_data->input_dev->dev));
-				else if (*blank == FB_BLANK_POWERDOWN)
+					previous_state = disable_touch
+				} else if (disable_touch && (previous_state != disable_touch)) {
 					synaptics_rmi4_suspend(
 						&(rmi4_data->input_dev->dev));
+					previous_state = disable_touch;
+				}
 			}
 		}
 	}
