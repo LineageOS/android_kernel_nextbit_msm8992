@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "fa5d592f_d5a18daa",
+        "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 4124,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-02-23T17:34:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa5d592f_554b5d2b",
+      "range": {
+        "startLine": 4124,
+        "startChar": 2,
+        "endLine": 4124,
+        "endChar": 3
+      },
+      "revId": "615dadfe9536ba8d4f0ef1c63fb584d858846fb7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fa5d592f_75466125",
         "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
         "patchSetId": 3
@@ -36,6 +60,30 @@
       "writtenOn": "2017-02-23T16:59:13Z",
       "side": 1,
       "message": "Move under FB_BLANK_POWERDOWN",
+      "range": {
+        "startLine": 4130,
+        "startChar": 0,
+        "endLine": 4130,
+        "endChar": 11
+      },
+      "revId": "615dadfe9536ba8d4f0ef1c63fb584d858846fb7",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fa5d592f_b5a619c0",
+        "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 4130,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-02-23T17:34:16Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa5d592f_75466125",
       "range": {
         "startLine": 4130,
         "startChar": 0,
