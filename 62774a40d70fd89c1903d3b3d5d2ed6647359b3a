@@ -16,6 +16,24 @@
       "revId": "62774a40d70fd89c1903d3b3d5d2ed6647359b3a",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fa5d592f_f8b5a831",
+        "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 4136,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-02-23T22:24:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fa5d592f_15772504",
+      "revId": "62774a40d70fd89c1903d3b3d5d2ed6647359b3a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
