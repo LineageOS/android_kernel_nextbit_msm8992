@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa5d592f_15772504",
+        "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 4136,
+      "author": {
+        "id": 9394
+      },
+      "writtenOn": "2017-02-23T19:44:04Z",
+      "side": 1,
+      "message": "You may want to add something to keep track of the current state of the TP and compare it to the new state before doing this block.  Some devices don\u0027t like being told to resume multiple times.",
+      "revId": "62774a40d70fd89c1903d3b3d5d2ed6647359b3a",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
