@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa5d592f_13b97d2e",
+        "filename": "drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.c",
+        "patchSetId": 7
+      },
+      "lineNbr": 4117,
+      "author": {
+        "id": 11883
+      },
+      "writtenOn": "2017-02-24T12:33:48Z",
+      "side": 1,
+      "message": "enable_touch?\nChecking if the value is true \"looks\" better",
+      "range": {
+        "startLine": 4117,
+        "startChar": 13,
+        "endLine": 4117,
+        "endChar": 26
+      },
+      "revId": "60e5e27ec9292deafb0d6577f5353fd8483c0600",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
