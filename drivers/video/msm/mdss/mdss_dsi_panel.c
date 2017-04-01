@@ -25,11 +25,33 @@
 
 #include "mdss_dsi.h"
 
+/*FIH, Hubert, 20151021, modify the order of touch suspend before backlight for [NBQ-502] {*/
+#include <fih/hwid.h>
+/*} FIH, Hubert, 20151021, modify the order of touch suspend before backlight for [NBQ-502]*/
+
+/*FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404] {*/
+#include <../drivers/input/touchscreen/synaptics_dsx/synaptics_dsx_core.h>
+/*} FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404]*/
+
 #define DT_CMD_HDR 6
 #define MIN_REFRESH_RATE 30
 #define DEFAULT_MDP_TRANSFER_TIME 14000
 
+#define LCM_PANEL_DEFAULT_FPS_VAL 60
+#define LCM_PANEL_MID_FPS_VAL     45
+#define LCM_PANEL_LOW_FPS_VAL     30
+
 DEFINE_LED_TRIGGER(bl_led_trigger);
+
+/*FIH, Hubert, 20151020, modify the order of touch suspend before backlight for [NBQ-502] {*/
+extern struct device *synaptics_input_dev;
+extern int synaptics_rmi4_suspend(struct device *dev);
+/*} FIH, Hubert, 20151020, modify the order of touch suspend before backlight for [NBQ-502]*/
+
+/*FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404] {*/
+extern struct synaptics_rmi4_data *syn_rmi4_data;
+extern int synaptics_rmi4_resume(struct device *dev);
+/*} FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404]*/
 
 void mdss_dsi_panel_pwm_cfg(struct mdss_dsi_ctrl_pdata *ctrl)
 {
@@ -140,6 +162,76 @@ u32 mdss_dsi_panel_cmd_read(struct mdss_dsi_ctrl_pdata *ctrl, char cmd0,
 
 	return 0;
 }
+static char panel_reg[2] = {0x0A, 0x00};
+static ssize_t panel_print_status(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
+{
+	int rx_len = 0;
+	int i, lx = 0;
+	char panel_reg_buf[128] = {0x0};
+	char rx_buf[128] = {0x0};
+
+	mdss_dsi_panel_cmd_read(ctrl_pdata, panel_reg[0],
+		panel_reg[1], NULL, rx_buf, 1);
+
+	rx_len = ctrl_pdata->rx_len;
+
+	for (i = 0; i < rx_len; i++) {
+		lx += snprintf(panel_reg_buf + lx, sizeof(panel_reg_buf),
+			 "%s%02x", "", rx_buf[i]);
+	}
+
+	return 0;
+}
+
+/*FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade {*/
+static bool IsReadLCM = false;
+static bool IsnewLCM = true;
+static char panel_reg2[2] = {0xdb, 0x00}; //catch lcm version
+ssize_t panel_print_status2(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
+{
+	int rx_len = 0;
+	int i, lx = 0;
+	char panel_reg_buf[128] = {0x0};
+	char rx_buf[128] = {0x0};
+
+	if (IsReadLCM)
+		return 0;
+
+	mdss_dsi_panel_cmd_read(ctrl_pdata, panel_reg2[0],
+		panel_reg2[1], NULL, rx_buf, 1);
+
+	rx_len = ctrl_pdata->rx_len;
+
+	for (i = 0; i < rx_len; i++) {
+		lx += snprintf(panel_reg_buf + lx, sizeof(panel_reg_buf),
+			"%s%02x", "", rx_buf[i]);
+	}
+	pr_info("panel_reg_buf:%s", panel_reg_buf);
+	if(strcmp(panel_reg_buf,"00")==0) // old lcm
+	{
+		pr_info("old panel\n");
+		IsnewLCM = false;
+	}
+	else if(strcmp(panel_reg_buf,"02")==0)
+	{
+		pr_info("new panel\n");
+		IsnewLCM = true;
+	}
+	else
+	{
+		pr_info("old panel\n");
+		IsnewLCM = false;
+	}
+
+	IsReadLCM = true;
+	return 0;
+}
+
+bool IsNewLCM(void)
+{
+	return IsnewLCM;
+}
+/*} FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade*/
 
 static void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
 			struct dsi_panel_cmds *pcmds, u32 flags)
@@ -214,6 +306,20 @@ static int mdss_dsi_request_gpios(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 			goto disp_en_gpio_err;
 		}
 	}
+
+/*<<[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */
+	if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+		rc = gpio_request(ctrl_pdata->disp_ldo_gpio,
+						"ldo_enable");
+		if (rc) {
+			pr_err("request ldo_en gpio failed, rc=%d\n",
+				       rc);
+			goto disp_ldo_gpio_err;
+		}
+	}
+	
+/*>>[NBQ-16] EricHsieh,END */
+	
 	rc = gpio_request(ctrl_pdata->rst_gpio, "disp_rst_n");
 	if (rc) {
 		pr_err("request reset gpio failed, rc=%d\n",
@@ -248,9 +354,16 @@ rst_gpio_err:
 	if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
 		gpio_free(ctrl_pdata->disp_en_gpio);
 disp_en_gpio_err:
+/*<<[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */
+	if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio))
+		gpio_free(ctrl_pdata->disp_ldo_gpio);
+disp_ldo_gpio_err:
+/*>>[NBQ-16] EricHsieh,END*/
 	return rc;
 }
-
+//JYLee added to force lp11 before reset to match spec 20160409 {
+extern void mdss_dsi_force_lp11(struct mdss_dsi_ctrl_pdata *ctrl_pdata);
+//JYLee added to force lp11 before reset to match spec 20160409 }
 int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 {
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
@@ -270,6 +383,13 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			   __func__, __LINE__);
 	}
 
+/*<<[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */	
+	if (!gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+		pr_debug("%s:%d, reset line not configured\n",
+			   __func__, __LINE__);
+	}
+/*>>[NBQ-16] EricHsieh,END */
+
 	if (!gpio_is_valid(ctrl_pdata->rst_gpio)) {
 		pr_debug("%s:%d, reset line not configured\n",
 			   __func__, __LINE__);
@@ -288,6 +408,18 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 		if (!pinfo->cont_splash_enabled) {
 			if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
 				gpio_set_value((ctrl_pdata->disp_en_gpio), 1);
+
+//JYLee added to force lp11 before reset to match spec 20160409 {
+			mdss_dsi_force_lp11(ctrl_pdata);
+//JYLee added to force lp11 before reset to match spec 20160409 }
+/*<<[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */
+			if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio))
+				gpio_set_value((ctrl_pdata->disp_ldo_gpio), 1);
+/*>>[NBQ-16] EricHsieh,END */
+
+//JYLee added to force lp11 before reset to match spec 20160409 {
+			usleep(5000);
+//JYLee added to force lp11 before reset to match spec 20160409 }
 
 			for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
 				gpio_set_value((ctrl_pdata->rst_gpio),
@@ -313,18 +445,30 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			pr_debug("%s: Reset panel done\n", __func__);
 		}
 	} else {
+		if (gpio_is_valid(ctrl_pdata->mode_gpio))
+			gpio_free(ctrl_pdata->mode_gpio);
+
 		if (gpio_is_valid(ctrl_pdata->bklt_en_gpio)) {
 			gpio_set_value((ctrl_pdata->bklt_en_gpio), 0);
 			gpio_free(ctrl_pdata->bklt_en_gpio);
 		}
+
+		gpio_set_value((ctrl_pdata->rst_gpio), 0);
+		gpio_free(ctrl_pdata->rst_gpio);
+
+		usleep(5000); //JY added to match CTC power off spec 20151109
+/*<<[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */
+		if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+			gpio_set_value((ctrl_pdata->disp_ldo_gpio), 0);
+			gpio_free(ctrl_pdata->disp_ldo_gpio);
+		}
+/*>>[NBQ-16] EricHsieh,END */
+
+		usleep(1000); //JY added to match CTC power off spec 20151109
 		if (gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
 			gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
 			gpio_free(ctrl_pdata->disp_en_gpio);
 		}
-		gpio_set_value((ctrl_pdata->rst_gpio), 0);
-		gpio_free(ctrl_pdata->rst_gpio);
-		if (gpio_is_valid(ctrl_pdata->mode_gpio))
-			gpio_free(ctrl_pdata->mode_gpio);
 	}
 	return rc;
 }
@@ -595,6 +739,18 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 	switch (ctrl_pdata->bklt_ctrl) {
 	case BL_WLED:
 		led_trigger_event(bl_led_trigger, bl_level);
+/*FIH, Hubert, 20151021, modify the order of touch suspend before backlight for [NBQ-502] {*/
+		if((fih_hwid_fetch(FIH_HWID_PRJ) == FIH_PRJ_NBQ)
+			|| (fih_hwid_fetch(FIH_HWID_PRJ) == FIH_PRJ_VZW))
+		{
+			if ((synaptics_input_dev != NULL) && (bl_level == 0))
+				synaptics_rmi4_suspend(synaptics_input_dev);
+//FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404] {
+			else if ((synaptics_input_dev != NULL) && (bl_level != 0) && (syn_rmi4_data->suspended == true))
+				synaptics_rmi4_resume(synaptics_input_dev);
+//} FIH, Hubert, 20151030, fix touch no response when double press power key for [NBQ-1404]
+		}
+/*} FIH, Hubert, 20151021, modify the order of touch suspend before backlight for [NBQ-502]*/
 		break;
 	case BL_PWM:
 		mdss_dsi_panel_bklt_pwm(ctrl_pdata, bl_level);
@@ -628,6 +784,9 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 			__func__);
 		break;
 	}
+/*FIH, Hubert, 20151020, modify the order of touch suspend before backlight for [NBQ-502] {*/
+	pr_debug("LCM_backlight_bl_level:%d\n", bl_level);
+/*} FIH, Hubert, 20151020, modify the order of touch suspend before backlight for [NBQ-502]*/
 }
 
 static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
@@ -659,8 +818,29 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		on_cmds = &ctrl->post_dms_on_cmds;
 
 	if (on_cmds->cmd_cnt)
+	{
+		mdss_dsi_panel_bl_ctrl(pdata, 0); //JY added to fix NBQM-435 20151123
 		mdss_dsi_panel_cmds_send(ctrl, on_cmds, CMD_REQ_COMMIT);
+	}
 
+	if (pinfo->dfps_update == DFPS_IMMEDIATE_LCM_CLK_UPDATE_MODE) {
+		/* Restore the dynamic frame rate */
+		int dynamic_rate = pinfo->mipi.refresh_rate;
+		pinfo->mipi.refresh_rate = DEFAULT_FRAME_RATE;
+
+		if ((pinfo->dynamic_fps == true) &&
+		    (dynamic_rate != DEFAULT_FRAME_RATE)) {
+			mdss_dsi_panel_update_fps(ctrl, dynamic_rate);
+		}
+	}
+
+	//Buda added for BBS log
+	if (1) panel_print_status(ctrl);
+	//Buda added for recovery backlight
+	if(strstr(saved_command_line, "androidboot.mode=1")!=NULL)
+	{
+		mdss_dsi_panel_bl_ctrl(pdata, 102);
+	}
 end:
 	pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
 	pr_debug("%s:-\n", __func__);
@@ -1473,6 +1653,12 @@ static void mdss_dsi_parse_dfps_config(struct device_node *pan_node,
 			pinfo->dfps_update =
 				DFPS_IMMEDIATE_PORCH_UPDATE_MODE_VFP;
 			pr_debug("dfps mode: Immediate porch VFP\n");
+		} else if (!strcmp(data,
+				   "dfps_immediate_lcm_clk_update_mode")) {
+			pinfo->dfps_update =
+				DFPS_IMMEDIATE_LCM_CLK_UPDATE_MODE;
+			pinfo->mipi.refresh_rate = DEFAULT_FRAME_RATE;
+			pr_debug("dfps mode: Immediate LCM clk update mode\n");
 		} else {
 			pinfo->dfps_update = DFPS_SUSPEND_RESUME_MODE;
 			pr_debug("default dfps mode: suspend/resume\n");
@@ -1967,6 +2153,16 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 	mdss_dsi_parse_dfps_config(np, ctrl_pdata);
 
+	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->low_power_fps_cmds,
+		"qcom,nbq-low-power-fps-command",
+		"qcom,nbq-low-power-fps-command-state");
+	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->mid_power_fps_cmds,
+		"qcom,nbq-mid-power-fps-command",
+		"qcom,nbq-mid-power-fps-command-state");
+	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->default_power_fps_cmds,
+		"qcom,nbq-default-power-fps-command",
+		"qcom,nbq-default-power-fps-command-state");
+
 	return 0;
 
 error:
@@ -2018,6 +2214,59 @@ int mdss_dsi_panel_init(struct device_node *node,
 	ctrl_pdata->low_power_config = mdss_dsi_panel_low_power_config;
 	ctrl_pdata->panel_data.set_backlight = mdss_dsi_panel_bl_ctrl;
 	ctrl_pdata->switch_mode = mdss_dsi_panel_switch_mode;
+
+	return 0;
+}
+
+int mdss_dsi_panel_update_fps(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
+			      int new_fps)
+{
+	int old_fps;
+	int bucket_fps;
+
+	if (ctrl_pdata == NULL) {
+		pr_err("%s: Invalid ctrl_pdata\n", __func__);
+		return -EBUSY;
+	}
+
+	/*
+	* We only have support for 3 FPS modes -- 60Hz, 45Hz, and 30Hz.  So
+	* round down the requested FPS to the nearest bucket.
+	*/
+	old_fps = ctrl_pdata->panel_data.panel_info.mipi.refresh_rate;
+	if (new_fps >= LCM_PANEL_DEFAULT_FPS_VAL) {
+		bucket_fps = LCM_PANEL_DEFAULT_FPS_VAL;
+	} else if (new_fps >= LCM_PANEL_MID_FPS_VAL) {
+		bucket_fps = LCM_PANEL_MID_FPS_VAL;
+	} else {
+		bucket_fps = LCM_PANEL_LOW_FPS_VAL;
+	}
+
+	if (bucket_fps == old_fps) {
+		/* Nothing to do */
+		return 0;
+	}
+
+	switch (bucket_fps) {
+	case LCM_PANEL_DEFAULT_FPS_VAL:
+		mdss_dsi_panel_cmds_send(ctrl_pdata,
+					 &ctrl_pdata->default_power_fps_cmds,
+					 CMD_REQ_COMMIT);
+		break;
+	case LCM_PANEL_MID_FPS_VAL:
+		mdss_dsi_panel_cmds_send(ctrl_pdata,
+					 &ctrl_pdata->mid_power_fps_cmds,
+					 CMD_REQ_COMMIT);
+		break;
+	case LCM_PANEL_LOW_FPS_VAL:
+		mdss_dsi_panel_cmds_send(ctrl_pdata,
+					 &ctrl_pdata->low_power_fps_cmds,
+					 CMD_REQ_COMMIT);
+		break;
+	default:
+		break;
+	}
+	ctrl_pdata->panel_data.panel_info.mipi.refresh_rate = bucket_fps;
 
 	return 0;
 }
