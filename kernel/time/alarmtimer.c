@@ -25,7 +25,7 @@
 #include <linux/posix-timers.h>
 #include <linux/workqueue.h>
 #include <linux/freezer.h>
-#include <linux/workqueue.h>
+
 
 /**
  * struct alarm_base - Alarm timer bases
@@ -55,6 +55,7 @@ static struct workqueue_struct *power_off_alarm_workqueue;
 static struct rtc_timer		rtctimer;
 static struct rtc_device	*rtcdev;
 static DEFINE_SPINLOCK(rtcdev_lock);
+static unsigned long power_on_alarm;
 static struct mutex power_on_alarm_lock;
 struct alarm init_alarm;
 
@@ -80,6 +81,7 @@ void power_on_alarm_init(void)
 	rtc_read_alarm(rtc, &rtc_alarm);
 	rt = rtc_alarm.time;
 
+
 	rtc_tm_to_time(&rt, &alarm_time);
 
 	if (alarm_time) {
@@ -95,7 +97,11 @@ void power_on_alarm_init(void)
  * Get the soonest power off alarm timer and set the alarm value into rtc
  * register.
  */
+#ifdef CONFIG_POWER_OFF_ALARM
+extern void set_poff_sec(long secs);
+#endif
 void set_power_on_alarm(void)
+
 {
 	int rc;
 	struct timespec wall_time, alarm_ts;
@@ -126,12 +132,24 @@ void set_power_on_alarm(void)
 
 	getnstimeofday(&wall_time);
 
+
+	rtc_tm_to_time(&rtc_time, &rtc_secs);
+	alarm_delta = wall_time.tv_sec - rtc_secs;
+	alarm_time = power_on_alarm - alarm_delta;
+#ifdef CONFIG_POWER_OFF_ALARM
+	set_poff_sec(alarm_time);
+#endif
+
 	/*
 	 * alarm_secs have to be bigger than "wall_time +1".
 	 * It is to make sure that alarm time will be always
 	 * bigger than wall time.
 	 */
+
 	if (alarm_secs <= wall_time.tv_sec + 1)
+
+	if (alarm_time <= rtc_secs)
+
 		goto disable_alarm;
 
 	rtc = alarmtimer_get_rtcdev();
@@ -345,6 +363,8 @@ ktime_t alarm_expires_remaining(const struct alarm *alarm)
 	return ktime_sub(alarm->node.expires, base->gettime());
 }
 
+
+
 #ifdef CONFIG_RTC_CLASS
 /**
  * alarmtimer_suspend - Suspend time callback
@@ -498,8 +518,13 @@ int alarm_start(struct alarm *alarm, ktime_t start)
  */
 int alarm_start_relative(struct alarm *alarm, ktime_t start)
 {
-	struct alarm_base *base = &alarm_bases[alarm->type];
+	struct alarm_base *base;
 
+	if (alarm->type >= ALARM_NUMTYPE) {
+		pr_err("Array out of index\n");
+		return -EINVAL;
+	}
+	base = &alarm_bases[alarm->type];
 	start = ktime_add(start, base->gettime());
 	return alarm_start(alarm, start);
 }
@@ -525,10 +550,15 @@ void alarm_restart(struct alarm *alarm)
  */
 int alarm_try_to_cancel(struct alarm *alarm)
 {
-	struct alarm_base *base = &alarm_bases[alarm->type];
+	struct alarm_base *base;
 	unsigned long flags;
 	int ret;
 
+	if (alarm->type >= ALARM_NUMTYPE) {
+		pr_err("Array out of index\n");
+		return -EINVAL;
+	}
+	base = &alarm_bases[alarm->type];
 	spin_lock_irqsave(&base->lock, flags);
 	ret = hrtimer_try_to_cancel(&alarm->timer);
 	if (ret >= 0)
@@ -619,26 +649,18 @@ enum alarmtimer_type clock2alarm(clockid_t clockid)
 static enum alarmtimer_restart alarm_handle_timer(struct alarm *alarm,
 							ktime_t now)
 {
-	unsigned long flags;
 	struct k_itimer *ptr = container_of(alarm, struct k_itimer,
 						it.alarm.alarmtimer);
-	enum alarmtimer_restart result = ALARMTIMER_NORESTART;
-
-	spin_lock_irqsave(&ptr->it_lock, flags);
-	if ((ptr->it_sigev_notify & ~SIGEV_THREAD_ID) != SIGEV_NONE) {
-		if (posix_timer_event(ptr, 0) != 0)
-			ptr->it_overrun++;
-	}
+	if (posix_timer_event(ptr, 0) != 0)
+		ptr->it_overrun++;
 
 	/* Re-add periodic timers */
 	if (ptr->it.alarm.interval.tv64) {
 		ptr->it_overrun += alarm_forward(alarm, now,
 						ptr->it.alarm.interval);
-		result = ALARMTIMER_RESTART;
+		return ALARMTIMER_RESTART;
 	}
-	spin_unlock_irqrestore(&ptr->it_lock, flags);
-
-	return result;
+	return ALARMTIMER_NORESTART;
 }
 
 /**
