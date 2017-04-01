@@ -41,6 +41,10 @@
 #include "wcdcal-hwdep.h"
 #include "wcd9xxx-resmgr.h"
 #include "wcd9xxx-common.h"
+//weihung [NBQM-61]porting aduio function
+#include <linux/proc_fs.h>
+#include <asm/uaccess.h>
+//weihung [NBQM-61]porting aduio function
 
 #define WCD9XXX_JACK_MASK (SND_JACK_HEADSET | SND_JACK_OC_HPHL | \
 			   SND_JACK_OC_HPHR | SND_JACK_LINEOUT | \
@@ -107,7 +111,9 @@
  * of plug type with current source
  */
 #define WCD9XXX_CS_MEAS_INVALD_RANGE_LOW_MV 160
-#define WCD9XXX_CS_MEAS_INVALD_RANGE_HIGH_MV 265
+//weihung [NBQM-61]porting aduio function
+#define WCD9XXX_CS_MEAS_INVALD_RANGE_HIGH_MV 160 //Shawn, refer to VN2
+//weihung [NBQM-61]porting aduio function
 
 /*
  * Threshold used to detect euro headset
@@ -126,7 +132,10 @@
 /* RX_HPH_CNP_WG_TIME increases by 0.24ms */
 #define WCD9XXX_WG_TIME_FACTOR_US	240
 
-#define WCD9XXX_V_CS_HS_MAX 500
+//[NBQM-884]:[Headset]DUT can't recognize headset when insert headset(iphone 5c) in suspend mode
+#define WCD9XXX_V_CS_HS_MAX 800
+//[NBQM-884]:[Headset]DUT can't recognize headset when insert headset(iphone 5c) in suspend mode
+
 #define WCD9XXX_V_CS_NO_MIC 5
 #define WCD9XXX_MB_MEAS_DELTA_MAX_MV 80
 #define WCD9XXX_CS_MEAS_DELTA_MAX_MV 12
@@ -142,6 +151,11 @@
 #define WCD9XXX_BOX_CAR_AVRG_MAX 10
 
 static int impedance_detect_en;
+//weihung [NBQM-61]porting aduio function
+int g_HOOK_SW;
+int g_PLUG_TYPE;
+//weihung [NBQM-61]porting aduio function
+
 module_param(impedance_detect_en, int,
 			S_IRUGO | S_IWUSR | S_IWGRP);
 MODULE_PARM_DESC(impedance_detect_en, "enable/disable impedance detect");
@@ -854,6 +868,10 @@ static void wcd9xxx_report_plug(struct wcd9xxx_mbhc *mbhc, int insertion,
 	if (!insertion) {
 		/* Report removal */
 		mbhc->hph_status &= ~jack_type;
+
+		//weihung [NBQM-61]porting aduio function
+		g_PLUG_TYPE = 0;
+		//weihung [NBQM-61]porting aduio function
 		/*
 		 * cancel possibly scheduled btn work and
 		 * report release if we reported button press
@@ -928,12 +946,20 @@ static void wcd9xxx_report_plug(struct wcd9xxx_mbhc *mbhc, int insertion,
 
 		if (jack_type == SND_JACK_HEADPHONE) {
 			mbhc->current_plug = PLUG_TYPE_HEADPHONE;
+			//weihung [NBQM-61]porting aduio function
+			g_PLUG_TYPE = 3;
+			//weihung [NBQM-61]porting aduio function
 		} else if (jack_type == SND_JACK_UNSUPPORTED) {
 			mbhc->current_plug = PLUG_TYPE_GND_MIC_SWAP;
 		} else if (jack_type == SND_JACK_HEADSET) {
 			mbhc->polling_active = BUTTON_POLLING_SUPPORTED;
 			mbhc->current_plug = PLUG_TYPE_HEADSET;
 			mbhc->update_z = true;
+
+			//weihung [NBQM-61]porting aduio function
+			g_PLUG_TYPE = 4;
+			//weihung [NBQM-61]porting aduio function
+
 		} else if (jack_type == SND_JACK_LINEOUT) {
 			mbhc->current_plug = PLUG_TYPE_HIGH_HPH;
 		} else if (jack_type == SND_JACK_ANC_HEADPHONE) {
@@ -3826,6 +3852,9 @@ irqreturn_t wcd9xxx_dce_handler(int irq, void *data)
 
 		mask = wcd9xxx_get_button_mask(btn);
 		mbhc->buttons_pressed |= mask;
+		//weihung [NBQM-61]porting aduio function
+		g_HOOK_SW = 1;
+		//weihung [NBQM-61]porting aduio function
 		wcd9xxx_lock_sleep(core_res);
 		if (schedule_delayed_work(&mbhc->mbhc_btn_dwork,
 					  msecs_to_jiffies(400)) == 0) {
@@ -3887,6 +3916,9 @@ static irqreturn_t wcd9xxx_release_handler(int irq, void *data)
 		}
 
 		mbhc->buttons_pressed &= ~WCD9XXX_JACK_BUTTON_MASK;
+		//weihung [NBQM-61]porting aduio function
+		g_HOOK_SW = 0;
+		//weihung [NBQM-61]porting aduio function
 	}
 
 	wcd9xxx_calibrate_hs_polling(mbhc);
@@ -5422,6 +5454,71 @@ int wcd9xxx_mbhc_get_impedance(struct wcd9xxx_mbhc *mbhc, uint32_t *zl,
 		return -EINVAL;
 }
 
+
+//weihung [NBQM-61]porting aduio function
+#define FIH_PROC_DIR   "AllHWList"
+#define PROC_HookSW_PATH  "AllHWList/HOOK_SW"
+#define HookSW_PATH "HOOK_SW"
+#define PROC_PlugType_PATH "AllHWList/PLUG_TYPE"
+#define PlugType_PATH "PLUG_TYPE"
+
+static ssize_t wcd9xxx_read_proc_of_hooksw(struct file *file, char __user *user_buf, size_t count, loff_t *ppos)
+{
+	char kbuffer[5];
+	int str_len;
+	str_len = snprintf(kbuffer, count, "%d", g_HOOK_SW);
+	return simple_read_from_buffer(user_buf, count, ppos, kbuffer, str_len);
+}
+
+static const struct file_operations proc_hooksw_fops = {
+	.owner = THIS_MODULE,
+	.read = wcd9xxx_read_proc_of_hooksw
+//	.write = wcd9xxx_write_proc_of_hooksw
+};
+static int create_wcd9xxx_proc_entry_of_hooksw(void)
+	{
+		struct proc_dir_entry *parent;
+		printk(KERN_INFO "@@%s: enter\n", __func__); //Shawn
+		if(proc_create(PROC_HookSW_PATH, 0644, NULL, &proc_hooksw_fops) == NULL){
+			parent = proc_mkdir (FIH_PROC_DIR, NULL);
+			if(proc_create(HookSW_PATH, 0644, parent, &proc_hooksw_fops) == NULL){
+				pr_err("@@Fail to create proc/%s\n", PROC_HookSW_PATH);
+				return 1;
+			}
+		}
+		printk( KERN_INFO "@@%s proc create success!\n", PROC_HookSW_PATH );
+		return 0;
+	}
+
+static ssize_t wcd9xxx_read_proc_of_plugtype(struct file *file, char __user *user_buf, size_t count, loff_t *ppos)
+{
+	char kbuffer[5];
+	int str_len;
+	str_len = snprintf(kbuffer, count, "%d", g_PLUG_TYPE);
+	return simple_read_from_buffer(user_buf, count, ppos, kbuffer, str_len);
+}
+
+static const struct file_operations proc_plugtype_fops = {
+	.owner = THIS_MODULE,
+	.read = wcd9xxx_read_proc_of_plugtype
+//	.write = wcd9xxx_write_proc_of_plugtype
+};
+static int create_wcd9xxx_proc_entry_of_plugtype(void)
+{
+	struct proc_dir_entry *parent;
+	printk(KERN_INFO "@@%s: enter\n", __func__); //Shawn
+	if(proc_create(PROC_PlugType_PATH, 0644, NULL, &proc_plugtype_fops) == NULL){
+		parent = proc_mkdir (FIH_PROC_DIR, NULL);
+		if(proc_create(PlugType_PATH, 0644, parent, &proc_plugtype_fops) == NULL){
+			pr_err("@@Fail to create proc/%s\n", PROC_PlugType_PATH);
+			return 1;
+		}
+	}
+	printk( KERN_INFO "@@%s proc create success!\n", PROC_PlugType_PATH );
+	return 0;
+}
+//Shawn @2014.11.20
+
 /*
  * wcd9xxx_mbhc_init : initialize MBHC internal structures.
  *
@@ -5494,6 +5591,25 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 			return ret;
 		}
 
+//weihung [NBQM-61]porting aduio function
+		ret = snd_jack_set_key(mbhc->button_jack.jack,
+				       SND_JACK_BTN_1,
+				       KEY_VOLUMEUP);
+		if (ret) {
+			pr_err("%s: Failed to set code for btn-1(KEY_VOLUMEUP)\n",
+				__func__);
+			return ret;
+		}
+		ret = snd_jack_set_key(mbhc->button_jack.jack,
+				       SND_JACK_BTN_2,
+				       KEY_VOLUMEDOWN);
+		if (ret) {
+			pr_err("%s: Failed to set code for btn-2(KEY_VOLUMEDOWN)\n",
+				__func__);
+			return ret;
+		}
+//weihung [NBQM-61]porting aduio function
+
 		INIT_DELAYED_WORK(&mbhc->mbhc_firmware_dwork,
 				  wcd9xxx_mbhc_fw_read);
 		INIT_DELAYED_WORK(&mbhc->mbhc_btn_dwork, wcd9xxx_btn_lpress_fn);
@@ -5513,6 +5629,11 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 	}
 
 	wcd9xxx_init_debugfs(mbhc);
+
+//weihung [NBQM-61]porting aduio function
+     create_wcd9xxx_proc_entry_of_hooksw();
+     create_wcd9xxx_proc_entry_of_plugtype();
+//weihung [NBQM-61]porting aduio function
 
 	/* Disable Impedance detection by default for certain codec types */
 	if (mbhc->mbhc_cb && mbhc->mbhc_cb->get_cdc_type &&
