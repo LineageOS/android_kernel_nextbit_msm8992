@@ -50,6 +50,11 @@
 
 #include "queue.h"
 
+/* FIH,Jimi,2015/08/19 add for version emmcinfo{*/
+#include <linux/string.h>
+#include "../../../arch/arm64/kernel/fih/fih_emmc.h"
+/* FIH,Jimi,2015/08/19 add for version emmcinfo}*/
+
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
 #undef MODULE_PARAM_PREFIX
@@ -3296,6 +3301,11 @@ static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md, *part_md;
 	char cap_str[10];
+        /* FIH,Jimi,2015/08/19 add for version emmcinfo{*/
+        char buf[FIH_EMMC_SIZE];
+        unsigned int max_count = 0;
+        unsigned int sec_count = 0;
+        /* FIH,Jimi,2015/08/19 add for version emmcinfo}*/
 
 	/*
 	 * Check that the card supports the command class(es) we need.
@@ -3312,6 +3322,49 @@ static int mmc_blk_probe(struct mmc_card *card)
 	pr_info("%s: %s %s %s %s\n",
 		md->disk->disk_name, mmc_card_id(card), mmc_card_name(card),
 		cap_str, md->read_only ? "(ro)" : "");
+
+        /* FIH,Jimi,2015/08/19 add for version emmcinfo{*/
+        if (0 == strcmp("mmcblk0", md->disk->disk_name))
+        {
+                switch (card->cid.manfid) {
+                        case 0x02: sprintf(buf, "Sandisk"); break;
+                        case 0x11: sprintf(buf, "Toshiba"); break;
+                        case 0x15: sprintf(buf, "Samsung"); break;
+                        case 0x45: sprintf(buf, "Sandisk"); break;
+                        case 0x70: sprintf(buf, "Kingston"); break;
+                        case 0x90: sprintf(buf, "Hynix"); break;
+                        case 0xFE: sprintf(buf, "Micron"); break;
+                        default:   sprintf(buf, "Unknown"); break;
+                }
+
+                switch (card->ext_csd.rev) {
+                        case 0x00: strcat(buf, " 4.0"); break;
+                        case 0x01: strcat(buf, " 4.1"); break;
+                        case 0x02: strcat(buf, " 4.2"); break;
+                        case 0x03: strcat(buf, " 4.3"); break;
+                        case 0x04: strcat(buf, " 4.4"); break;
+                        case 0x05: strcat(buf, " 4.41"); break;
+                        case 0x06: strcat(buf, " 4.5"); break;
+                        default: sprintf(buf, "%s 0x%x", buf, card->ext_csd.rev);break;
+                }
+
+                sec_count =
+                  + ((card->ext_csd.raw_sectors[3]) << 24)
+                  + ((card->ext_csd.raw_sectors[2]) << 16)
+                  + ((card->ext_csd.raw_sectors[1]) <<  8)
+                  + (card->ext_csd.raw_sectors[0]);
+
+                max_count = 1 << 21; /* 1GB */
+                while (max_count < sec_count) {
+                        max_count = max_count << 1;
+                }
+                sprintf(buf, "%s %dGB", buf, (max_count >> 21));
+
+                sprintf(buf, "%s 0x%x%x", buf, card->cid.fwrev, card->cid.hwrev);
+
+                fih_emmc_setup(buf);
+        }
+        /* FIH,Jimi,2015/08/19 add for version emmcinfo}*/
 
 	if (mmc_blk_alloc_parts(card, md))
 		goto out;
