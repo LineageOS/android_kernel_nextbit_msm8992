@@ -348,6 +348,7 @@ struct mdss_dsi_ctrl_pdata {
 	int disp_te_gpio;
 	int rst_gpio;
 	int disp_en_gpio;
+	int disp_ldo_gpio;  /*[NBQ-16] EricHsieh,Implement the OTM1926C CTC 5.2" panel */
 	int bklt_en_gpio;
 	int mode_gpio;
 	int bklt_ctrl;	/* backlight ctrl */
@@ -387,6 +388,10 @@ struct mdss_dsi_ctrl_pdata {
 	u32 *status_value;
 	u32 status_error_count;
 	u32 max_status_error_count;
+
+	struct dsi_panel_cmds low_power_fps_cmds;
+	struct dsi_panel_cmds mid_power_fps_cmds;
+	struct dsi_panel_cmds default_power_fps_cmds;
 
 	struct dsi_panel_cmds video2cmd;
 	struct dsi_panel_cmds cmd2video;
@@ -520,6 +525,9 @@ int mdss_panel_get_dst_fmt(u32 bpp, char mipi_mode, u32 pixel_packing,
 
 int mdss_dsi_register_recovery_handler(struct mdss_dsi_ctrl_pdata *ctrl,
 		struct mdss_intf_recovery *recovery);
+
+int mdss_dsi_panel_update_fps(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
+			      int new_fps);
 
 static inline const char *__mdss_dsi_pm_name(enum dsi_pm_type module)
 {

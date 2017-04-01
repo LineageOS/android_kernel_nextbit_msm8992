@@ -29,6 +29,10 @@
 #include "mdss_dsi.h"
 #include "mdss_debug.h"
 
+/*FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade {*/
+extern ssize_t panel_print_status2(struct mdss_dsi_ctrl_pdata *ctrl_pdata);
+/*} FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade*/
+
 #define XO_CLK_RATE	19200000
 
 static struct dsi_drv_cm_data shared_ctrl_data;
@@ -205,6 +209,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+	struct mdss_panel_info *pinfo = NULL; //JYLee added to cover bad IC power timing 20160418
 	int i = 0;
 
 	if (pdata == NULL) {
@@ -214,6 +219,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 
 	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
 				panel_data);
+	pinfo = &(ctrl_pdata->panel_data.panel_info); //JYLee added to cover bad IC power timing 20160418
 
 	for (i = 0; i < DSI_MAX_PM; i++) {
 		/*
@@ -231,6 +237,16 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 			goto error;
 		}
 	}
+//JYLee added to cover bad IC power timing 20160416 {
+	if (!pinfo->cont_splash_enabled) {
+		for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
+			gpio_set_value((ctrl_pdata->rst_gpio),
+				pdata->panel_info.rst_seq[i]);
+			if (pdata->panel_info.rst_seq[++i])
+				usleep(pinfo->rst_seq[i] * 1000);
+		}
+	}
+//JYLee added to cover bad IC power timing 20160416 }
 	if (ctrl_pdata->panel_bias_vreg) {
 		pr_debug("%s: Enable panel bias vreg. ndx = %d\n",
 		       __func__, ctrl_pdata->ndx);
@@ -692,7 +708,18 @@ static int mdss_dsi_update_panel_config(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 
 	return ret;
 }
+//JYLee added to force lp11 before reset to match spec 20160409 {
+void mdss_dsi_force_lp11(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
+{
+	u32 tmp;
 
+	tmp = MIPI_INP((ctrl_pdata->ctrl_base) + 0xac);
+	tmp &= ~(1<<28);
+	MIPI_OUTP((ctrl_pdata->ctrl_base) + 0xac, tmp);
+	wmb();
+	pr_err("Force lp11\n");
+}
+//JYLee added to force lp11 before reset to match spec 20160409 }
 int mdss_dsi_on(struct mdss_panel_data *pdata)
 {
 	int ret = 0;
@@ -894,6 +921,10 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 			enable_irq(gpio_to_irq(ctrl_pdata->disp_te_gpio));
 	}
 
+// FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade {
+	panel_print_status2(ctrl_pdata);
+//} FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade
+
 error:
 	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
 	pr_debug("%s-:\n", __func__);
@@ -1002,6 +1033,26 @@ int mdss_dsi_cont_splash_on(struct mdss_panel_data *pdata)
 	mdss_dsi_sw_reset(ctrl_pdata, true);
 	pr_debug("%s-:End\n", __func__);
 	return ret;
+}
+
+static void __mdss_dsi_update_panel_clk(struct mdss_panel_data *pdata,
+					int new_fps)
+{
+	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
+
+	if (pdata == NULL) {
+		pr_err("%s Invalid pdata\n", __func__);
+		return;
+	}
+
+	ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
+				  panel_data);
+	if (ctrl_pdata == NULL) {
+		pr_err("%s Invalid ctrl_pdata\n", __func__);
+		return;
+	}
+
+	mdss_dsi_panel_update_fps(ctrl_pdata, new_fps);
 }
 
 static void __mdss_dsi_update_video_mode_total(struct mdss_panel_data *pdata,
@@ -1258,34 +1309,49 @@ static int mdss_dsi_dfps_config(struct mdss_panel_data *pdata, int new_fps)
 	if (sctrl_pdata)
 		sctrl_pdata->dfps_status = true;
 
-	if (new_fps !=
-		ctrl_pdata->panel_data.panel_info.mipi.frame_rate) {
-		if (pdata->panel_info.dfps_update
-			== DFPS_IMMEDIATE_PORCH_UPDATE_MODE_HFP ||
-			pdata->panel_info.dfps_update
-			== DFPS_IMMEDIATE_PORCH_UPDATE_MODE_VFP) {
-
-			__mdss_dsi_update_video_mode_total(pdata, new_fps);
-			if (sctrl_pdata) {
-				pr_debug("%s Updating slave ctrl DFPS\n",
-						__func__);
-				__mdss_dsi_update_video_mode_total(
-						&sctrl_pdata->panel_data,
-						new_fps);
-			}
-
-		} else {
-			rc = __mdss_dsi_dfps_update_clks(pdata, new_fps);
-			if (!rc && sctrl_pdata) {
-				pr_debug("%s Updating slave ctrl DFPS\n",
-						__func__);
-				rc = __mdss_dsi_dfps_update_clks(
-						&sctrl_pdata->panel_data,
-						new_fps);
+	switch (pinfo->type) {
+	case MIPI_CMD_PANEL: {
+		if (new_fps !=
+		    ctrl_pdata->panel_data.panel_info.mipi.refresh_rate) {
+			if (pdata->panel_info.dfps_update ==
+			    DFPS_IMMEDIATE_LCM_CLK_UPDATE_MODE) {
+				__mdss_dsi_update_panel_clk(pdata, new_fps);
 			}
 		}
-	} else {
-		pr_debug("%s: Panel is already at this FPS\n", __func__);
+		break;
+	}
+	case MIPI_VIDEO_PANEL: {
+		if (new_fps !=
+		    ctrl_pdata->panel_data.panel_info.mipi.frame_rate) {
+			if ((pdata->panel_info.dfps_update ==
+			     DFPS_IMMEDIATE_PORCH_UPDATE_MODE_HFP) ||
+			    (pdata->panel_info.dfps_update ==
+			     DFPS_IMMEDIATE_PORCH_UPDATE_MODE_VFP)) {
+				__mdss_dsi_update_video_mode_total(pdata,
+								   new_fps);
+				if (sctrl_pdata) {
+					pr_debug("%s Updating sctrl DFPS\n",
+							__func__);
+					__mdss_dsi_update_video_mode_total(
+						&sctrl_pdata->panel_data,
+						new_fps);
+				}
+			} else {
+				rc = __mdss_dsi_dfps_update_clks(pdata,
+								 new_fps);
+				if (!rc && sctrl_pdata) {
+					pr_debug("%s Updating sctrl DFPS\n",
+							__func__);
+					rc = __mdss_dsi_dfps_update_clks(
+						&sctrl_pdata->panel_data,
+						new_fps);
+				}
+			}
+		}
+		break;
+	}
+	default:
+		break;
 	}
 
 	return rc;
@@ -1833,6 +1899,7 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 		disable_irq(gpio_to_irq(ctrl_pdata->disp_te_gpio));
 	}
 	pr_debug("%s: Dsi Ctrl->%d initialized\n", __func__, index);
+
 	return 0;
 
 error_pan_node:
@@ -2106,6 +2173,18 @@ int dsi_panel_device_register(struct device_node *pan_node,
 			pr_err("%s:%d, Disp_en gpio not specified\n",
 					__func__, __LINE__);
 	}
+
+//<<[NBQ-16] EricHsieh, Implement the OTM1926C CTC 5.2" panel 	
+	if (ctrl_pdata->disp_ldo_gpio <= 0) {
+		ctrl_pdata->disp_ldo_gpio = of_get_named_gpio(
+			ctrl_pdev->dev.of_node,
+			"qcom,platform-ldo-gpio", 0);
+
+		if (!gpio_is_valid(ctrl_pdata->disp_en_gpio))
+			pr_err("%s:%d, Disp_en gpio not specified\n",
+					__func__, __LINE__);
+	}
+//>>[NBQ-16] EricHsieh,END
 
 	ctrl_pdata->disp_te_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
 		"qcom,platform-te-gpio", 0);
