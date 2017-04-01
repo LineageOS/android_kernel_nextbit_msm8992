@@ -1,0 +1,24 @@
+# FIH configuration options
+
+config MACH_FIH
+	bool "FIH device"
+	depends on ARCH_MSM
+	help
+	  Support for FIH products
+
+config MACH_FIH_MSM8992
+	bool "Yulong MSM8939"
+	depends on ARCH_MSM8916
+	select MACH_FIH
+	help
+	  Support for MSM8992 FIH variants
+
+menu "FIH board selection"
+
+config MACH_NBQ
+	bool "NBQ board"
+	select MACH_FIH_MSM8992
+	help
+	  Support for FIH NBQ variant
+
+endmenu
