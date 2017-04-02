@@ -40,10 +40,6 @@ extern char fih_touch_fw[32];
 extern char fih_touch[32];
 /*} FIH, Hubert, 20151006, the information of touch firmware version*/
 
-/*FIH, Hubert, 20160302, after upgrade TP FW, to reinit f54 to solve virtual file (test) not created {*/
-extern void synaptics_rmi4_f54_reset(struct synaptics_rmi4_data *rmi4_data);
-/*} FIH, Hubert, 20160302, after upgrade TP FW, to reinit f54 to solve virtual file (test) not created*/
-
 /*  NBQ - EricHsieh - [06-23] - [Touch] Synaptics touch driver porting */
 /*  NBQ - EricHsieh - [06-41] - [Touch] Update Synaptics touch firmware */
 /*  NBQ - AlbertWu - [NBQ-45] - [Touch] Synaptics touch driver porting ,touch can work. */
@@ -1633,11 +1629,6 @@ exit:
 		printk("BBox::UEC; 7::5\n");
 	}
 /*} FIH, Hubert, 20151021, BBox for touch, vibrator, led*/
-
-/*FIH, Hubert, 20160302, after upgrade TP FW, to reinit f54 to solve virtual file (test) not created {*/
-	synaptics_rmi4_f54_reset(rmi4_data);
-/*} FIH, Hubert, 20160302, after upgrade TP FW, to reinit f54 to solve virtual file (test) not created */
-
 	}
 	return;
 }
