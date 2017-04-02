@@ -98,6 +98,8 @@ static const char longname[] = "Gadget Android";
 #define MIDI_BUFFER_SIZE    1024
 #define MIDI_QUEUE_LENGTH   32
 
+#define FIH_CHARGER_DETECT
+
 struct android_usb_function {
 	char *name;
 	void *config;
@@ -394,6 +396,9 @@ enum android_device_state {
 	USB_RESUMED
 };
 
+#ifdef FIH_CHARGER_DETECT
+extern void set_charger_type(int);
+#endif
 static void android_work(struct work_struct *data)
 {
 	struct android_dev *dev = container_of(data, struct android_dev, work);
@@ -472,6 +477,10 @@ static void android_work(struct work_struct *data)
 			last_uevent = next_state;
 		}
 		pr_info("%s: sent uevent %s\n", __func__, uevent_envp[0]);
+#ifdef FIH_CHARGER_DETECT
+		if(uevent_envp == configured)
+			set_charger_type(4); // 4: POWER_SUPPLY_TYPE_USB
+#endif
 	} else {
 		pr_info("%s: did not send uevent (%d %d %pK)\n", __func__,
 			 dev->connected, dev->sw_connected, cdev->config);
@@ -2436,8 +2445,11 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	}
 
 	config->fsg.nluns = 1;
-	snprintf(name[0], MAX_LUN_NAME, "lun");
-	config->fsg.luns[0].removable = 1;
+
+	config->fsg.luns[0].cdrom = 1;
+	config->fsg.luns[0].ro = 1;
+	config->fsg.luns[0].removable = 0;
+	snprintf(name[0], MAX_LUN_NAME, "lun0");
 
 	if (dev->pdata && dev->pdata->cdrom) {
 		config->fsg.luns[config->fsg.nluns].cdrom = 1;
@@ -4101,3 +4113,9 @@ static void __exit cleanup(void)
 	platform_driver_unregister(&android_platform_driver);
 }
 module_exit(cleanup);
+
+int android_usb_product_id(void)
+{
+	return device_desc.idProduct;
+}
+EXPORT_SYMBOL(android_usb_product_id);
