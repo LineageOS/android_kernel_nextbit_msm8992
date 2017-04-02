@@ -63,7 +63,7 @@ static void *emergency_dload_mode_addr;
 static bool scm_dload_supported;
 
 static int dload_set(const char *val, struct kernel_param *kp);
-static int download_mode = 1;
+static int download_mode = 0;/* FIH,Jimi,2015/1/05 change default value from 1 to 0 */
 module_param_call(download_mode, dload_set, param_get_int,
 			&download_mode, 0644);
 static int panic_prep_restart(struct notifier_block *this,
@@ -244,6 +244,9 @@ static void msm_restart_prepare(const char *cmd)
 			strcmp(cmd, "keys clear")))
 			need_warm_reset = true;
 	}
+
+	/* WARM-RESET is needed for keeping PSTORE content in DDR */
+	need_warm_reset = true;
 
 	/* Hard reset the PMIC unless memory contents must be maintained. */
 	if (need_warm_reset) {
