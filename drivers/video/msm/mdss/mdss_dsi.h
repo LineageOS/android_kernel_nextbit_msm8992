@@ -124,13 +124,6 @@ enum dsi_pm_type {
 	DSI_MAX_PM
 };
 
-enum {
-	CABC_OFF,
-	CABC_UI,
-	CABC_STILL,
-	CABC_MOVING,
-};
-
 #define CTRL_STATE_UNKNOWN		0x00
 #define CTRL_STATE_PANEL_INIT		BIT(0)
 #define CTRL_STATE_MDP_ACTIVE		BIT(1)
@@ -396,16 +389,6 @@ struct mdss_dsi_ctrl_pdata {
 	u32 status_error_count;
 	u32 max_status_error_count;
 
-	// KuroCHChung CABC Impletation {
-	struct dsi_panel_cmds cabc_off_cmds;
-	struct dsi_panel_cmds cabc_ui_cmds;
-	struct dsi_panel_cmds cabc_still_cmds;
-	struct dsi_panel_cmds cabc_moving_cmds;
-
-	struct dsi_panel_cmds ce_on_cmds;
-	struct dsi_panel_cmds ce_off_cmds;
-	// } KuroCHChung CABC Impletation
-
 	struct dsi_panel_cmds low_power_fps_cmds;
 	struct dsi_panel_cmds mid_power_fps_cmds;
 	struct dsi_panel_cmds default_power_fps_cmds;
@@ -545,11 +528,6 @@ int mdss_dsi_register_recovery_handler(struct mdss_dsi_ctrl_pdata *ctrl,
 
 int mdss_dsi_panel_update_fps(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 			      int new_fps);
-
-int mdss_dsi_panel_cabc_ctrl(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
-							int cabc_status);
-
-int mdss_dsi_panel_ce_onoff(struct mdss_dsi_ctrl_pdata *ctrl_pdata, unsigned long enable);
 
 static inline const char *__mdss_dsi_pm_name(enum dsi_pm_type module)
 {
