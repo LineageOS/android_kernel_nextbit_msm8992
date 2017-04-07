@@ -163,9 +163,11 @@
 		cm,mdss-livedisplay-sre-strong-value = <0x70>;
 		cm,mdss-livedisplay-aco-value = <0x80>;
         */
+	/*
 		cm,mdss-livedisplay-post-cmd = [
 			05 01 00 00 10 00 02 29 00
 			05 01 00 00 78 00 02 11 00 ];
+	*/
 		cm,mdss-livedisplay-color-enhance-on = [
 			29 01 00 00 00 00 02 00 00
 			29 01 00 00 00 00 04 FF 19 06 01
