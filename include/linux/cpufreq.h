@@ -490,4 +490,8 @@ static inline int cpufreq_generic_exit(struct cpufreq_policy *policy)
 
 void acct_update_power(struct task_struct *p, cputime_t cputime);
 
+//20150330 FAO-537 IsonYHHung start
+struct _cpufreq_subsys_opt {
+	unsigned int (*cpuload)(struct cpufreq_policy *p, unsigned int load);
+
 #endif /* _LINUX_CPUFREQ_H */
