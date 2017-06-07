@@ -709,12 +709,15 @@ int trace_print_context(struct trace_iterator *iter)
 			       comm, entry->pid, iter->cpu);
 	if (!ret)
 		return 0;
+<<<<<<<
 
 	if (trace_flags & TRACE_ITER_IRQ_INFO) {
 		ret = trace_print_lat_fmt(s, entry);
 		if (!ret)
 			return 0;
 	}
+=======
+>>>>>>>
 
 	if (iter->iter_flags & TRACE_FILE_TIME_IN_NS) {
 		t = ns2usecs(iter->ts);

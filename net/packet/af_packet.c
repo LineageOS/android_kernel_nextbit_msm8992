@@ -3147,6 +3147,21 @@ packet_setsockopt(struct socket *sock, int level, int optname, char __user *optv
 		default:
 			return -EINVAL;
 		}
+<<<<<<<
+=======
+		lock_sock(sk);
+		if (po->rx_ring.pg_vec || po->tx_ring.pg_vec) {
+			ret = -EBUSY;
+		} else {
+			po->tp_version = val;
+			ret = 0;
+		}
+		release_sock(sk);
+		return ret;
+	}
+	case PACKET_RESERVE:
+	{
+>>>>>>>
 		lock_sock(sk);
 		if (po->rx_ring.pg_vec || po->tx_ring.pg_vec) {
 			ret = -EBUSY;

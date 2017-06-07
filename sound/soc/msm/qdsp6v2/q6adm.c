@@ -1013,6 +1013,20 @@ int adm_get_params(int port_id, int copp_idx, uint32_t module_id,
 		pr_err("%s: Invalid params_length\n", __func__);
 		return -EINVAL;
 	}
+<<<<<<<
+=======
+
+	sz = (uint64_t)sizeof(struct adm_cmd_get_pp_params_v5) +
+				(uint64_t)params_length;
+	/*
+	 * Check if the value of "sz" (which is ultimately assigned to
+	 * "hdr.pkt_size") crosses U16_MAX.
+	 */
+	if (sz > U16_MAX) {
+		pr_err("%s: Invalid params_length\n", __func__);
+		return -EINVAL;
+	}
+>>>>>>>
 	adm_params = kzalloc(sz, GFP_KERNEL);
 	if (!adm_params) {
 		pr_err("%s: adm params memory alloc failed", __func__);

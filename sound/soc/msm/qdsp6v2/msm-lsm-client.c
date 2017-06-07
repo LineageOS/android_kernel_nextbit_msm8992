@@ -361,6 +361,18 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 	switch (cmd) {
 	case SNDRV_LSM_SET_SESSION_DATA:
 		pr_debug("%s: set Session data\n", __func__);
+<<<<<<<
+=======
+                if (copy_from_user(&session_data, arg,
+                                   sizeof(session_data))) {
+                        dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
+                                __func__, "LSM_SET_SESSION_DATA");
+                        return -EFAULT;
+                }
+		if (prtd) {
+			if (session_data.app_id <= LSM_VOICE_WAKEUP_APP_ID_V2
+			    && session_data.app_id > 0) {
+>>>>>>>
                 if (copy_from_user(&session_data, arg,
                                    sizeof(session_data))) {
                         dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
@@ -786,6 +798,15 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
         case SNDRV_LSM_EVENT_STATUS: {
                 struct snd_lsm_event_status *user = NULL, userarg32;
                 struct snd_lsm_event_status *user32 = NULL;
+<<<<<<<
+=======
+		}
+		break;
+	}
+        case SNDRV_LSM_EVENT_STATUS: {
+                struct snd_lsm_event_status *user = NULL, userarg32;
+                struct snd_lsm_event_status *user32 = NULL;
+>>>>>>>
 		if (copy_from_user(&userarg32, arg, sizeof(userarg32))) {
 			pr_err("%s: err copyuser ioctl %s\n",
 			__func__, "SNDRV_LSM_EVENT_STATUS");
@@ -907,6 +928,21 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
                  */
                 dev_err(rtd->dev,
                         "%s: Invalid cmd for compat_ioctl\n",
+<<<<<<<
+=======
+		}
+		break;
+	}
+        case SNDRV_LSM_REG_SND_MODEL_V2:
+        case SNDRV_LSM_SET_PARAMS:
+                /*
+                 * In ideal cases, the compat_ioctl should never be called
+                 * with the above unlocked ioctl commands. Print error
+                 * and return error if it does.
+                 */
+                dev_err(rtd->dev,
+                        "%s: Invalid cmd for compat_ioctl\n",
+>>>>>>>
                         __func__);
                 err = -EINVAL;
                 break;
@@ -934,6 +970,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 	case SNDRV_LSM_REG_SND_MODEL_V2: {
 		struct snd_lsm_sound_model_v2 snd_model_v2;
 		if (copy_from_user(&snd_model_v2, arg, sizeof(snd_model_v2))) {
+<<<<<<<
 			err = -EFAULT;
 			pr_err("%s: copy from user failed, size %zd\n",
 			__func__, sizeof(struct snd_lsm_sound_model_v2));
@@ -955,6 +992,8 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 			return -EINVAL;
 		}
 		if (copy_from_user(&snd_model, arg, sizeof(snd_model))) {
+=======
+>>>>>>>
 			err = -EFAULT;
 			pr_err("%s: copy from user failed, size %zd\n",
 			__func__, sizeof(struct snd_lsm_sound_model));

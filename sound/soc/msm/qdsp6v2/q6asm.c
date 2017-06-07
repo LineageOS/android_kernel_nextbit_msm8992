@@ -1252,8 +1252,9 @@ int q6asm_audio_client_buf_alloc_contiguous(unsigned int dir,
 	size_t len;
 	int bytes_to_alloc;
 
-	if (!(ac) || ((dir != IN) && (dir != OUT))) {
-		pr_err("%s: ac %p dir %d\n", __func__, ac, dir);
+	if (!(ac) || !(bufsz) || ((dir != IN) && (dir != OUT))) {
+		pr_err("%s: ac %p bufsz %d dir %d\n", __func__, ac, bufsz,
+			dir);
 		return -EINVAL;
 	}
 
@@ -3551,13 +3552,42 @@ static int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
 	if (channels == 1)  {
 		lchannel_mapping[0] = PCM_CHANNEL_FC;
 	} else if (channels == 2) {
+<<<<<<<
+=======
+	} else if (channels == 4) {
 		lchannel_mapping[0] = PCM_CHANNEL_FL;
 		lchannel_mapping[1] = PCM_CHANNEL_FR;
+		lchannel_mapping[2] = use_back_flavor ?
+			PCM_CHANNEL_LB : PCM_CHANNEL_LS;
+		lchannel_mapping[3] = use_back_flavor ?
+			PCM_CHANNEL_RB : PCM_CHANNEL_RS;
+	} else if (channels == 5) {
+>>>>>>>
+		lchannel_mapping[0] = PCM_CHANNEL_FL;
+		lchannel_mapping[1] = PCM_CHANNEL_FR;
+<<<<<<<
 	} else if (channels == 3) {
+=======
+		lchannel_mapping[2] = PCM_CHANNEL_FC;
+		lchannel_mapping[3] = use_back_flavor ?
+			PCM_CHANNEL_LB : PCM_CHANNEL_LS;
+		lchannel_mapping[4] = use_back_flavor ?
+			PCM_CHANNEL_RB : PCM_CHANNEL_RS;
+	} else if (channels == 6) {
+>>>>>>>
 		lchannel_mapping[0] = PCM_CHANNEL_FL;
 		lchannel_mapping[1] = PCM_CHANNEL_FR;
 		lchannel_mapping[2] = PCM_CHANNEL_FC;
+<<<<<<<
 	} else if (channels == 4) {
+=======
+		lchannel_mapping[3] = PCM_CHANNEL_LFE;
+		lchannel_mapping[4] = use_back_flavor ?
+			PCM_CHANNEL_LB : PCM_CHANNEL_LS;
+		lchannel_mapping[5] = use_back_flavor ?
+			PCM_CHANNEL_RB : PCM_CHANNEL_RS;
+	} else if (channels == 8) {
+>>>>>>>
 		lchannel_mapping[0] = PCM_CHANNEL_FL;
 		lchannel_mapping[1] = PCM_CHANNEL_FR;
 		lchannel_mapping[2] = use_back_flavor ?
@@ -4869,10 +4899,31 @@ static int q6asm_memory_map_regions(struct audio_client *ac, int dir,
 		return -EINVAL;
 	}
 
+	if (bufcnt_t > (UINT_MAX
+			- sizeof(struct avs_cmd_shared_mem_map_regions))
+			/ sizeof(struct avs_shared_map_region_payload)) {
+		pr_err("%s: Unsigned Integer Overflow. bufcnt_t = %u\n",
+				__func__, bufcnt_t);
+		return -EINVAL;
+	}
+
 	cmd_size = sizeof(struct avs_cmd_shared_mem_map_regions)
 			+ (sizeof(struct avs_shared_map_region_payload)
 							* bufcnt_t);
 
+<<<<<<<
+=======
+
+	if (bufcnt > (UINT_MAX / sizeof(struct asm_buffer_node))) {
+		pr_err("%s: Unsigned Integer Overflow. bufcnt = %u\n",
+				__func__, bufcnt);
+		return -EINVAL;
+	}
+
+	buffer_node = kzalloc(sizeof(struct asm_buffer_node) * bufcnt,
+				GFP_KERNEL);
+	if (!buffer_node) {
+>>>>>>>
 
 	if (bufcnt > (UINT_MAX / sizeof(struct asm_buffer_node))) {
 		pr_err("%s: Unsigned Integer Overflow. bufcnt = %u\n",

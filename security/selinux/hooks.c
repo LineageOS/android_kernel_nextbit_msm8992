@@ -1083,11 +1083,17 @@ static int selinux_sb_show_options(struct seq_file *m, struct super_block *sb)
 		return rc;
 	}
 
+<<<<<<<
 	selinux_write_opts(m, &opts);
 
 	security_free_mnt_opts(&opts);
 
 	return rc;
+=======
+	return avc_has_perm(newsid, sbsec->sid,
+						SECCLASS_FILESYSTEM,
+						FILESYSTEM__ASSOCIATE, &ad);
+>>>>>>>
 }
 
 static inline u16 inode_mode_to_security_class(umode_t mode)
@@ -3956,23 +3962,44 @@ static int selinux_socket_create(int family, int type,
 	if (kern)
 		return 0;
 
+<<<<<<<
 	secclass = socket_type_to_security_class(family, type, protocol);
 	rc = socket_sockcreate_sid(tsec, secclass, &newsid);
 	if (rc)
 		return rc;
 
 	return avc_has_perm(tsec->sid, newsid, secclass, SOCKET__CREATE, NULL);
+=======
+	return avc_has_perm(sid, isec->sid, isec->sclass, av, &ad);
+>>>>>>>
 }
 
+<<<<<<<
+=======
+
+static int selinux_inode_create(struct inode *dir, struct dentry *dentry, umode_t mode)
+{
+	return may_create(dir, dentry, SECCLASS_FILE);
+}
+
+static int selinux_inode_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_dentry)
+{
+	return may_link(dir, old_dentry, MAY_LINK);
+>>>>>>>
 static int selinux_socket_post_create(struct socket *sock, int family,
 				      int type, int protocol, int kern)
 {
+<<<<<<<
 	const struct task_security_struct *tsec = current_security();
 	struct inode_security_struct *isec = SOCK_INODE(sock)->i_security;
 	struct sk_security_struct *sksec;
 	int err = 0;
 
 	isec->sclass = socket_type_to_security_class(family, type, protocol);
+=======
+	return may_rename(old_inode, old_dentry, new_inode, new_dentry);
+}
+>>>>>>>
 
 	if (kern)
 		isec->sid = SECINITSID_KERNEL;
@@ -3982,18 +4009,31 @@ static int selinux_socket_post_create(struct socket *sock, int family,
 			return err;
 	}
 
+<<<<<<<
 	isec->initialized = 1;
 
+=======
+	if (!strncmp(name, XATTR_SECURITY_PREFIX,
+		     sizeof XATTR_SECURITY_PREFIX - 1)) {
+		if (!strcmp(name, XATTR_NAME_CAPS)) {
+>>>>>>>
+<<<<<<<
 	if (sock->sk) {
 		sksec = sock->sk->sk_security;
 		sksec->sid = isec->sid;
 		sksec->sclass = isec->sclass;
 		err = selinux_netlbl_socket_post_create(sock->sk, family);
 	}
+=======
+	struct file_security_struct *fsec = file->f_security;
+	struct inode_security_struct *isec = inode->i_security;
+	u32 sid = current_sid();
+>>>>>>>
 
 	return err;
 }
 
+<<<<<<<
 /* Range of port numbers used to automatically bind.
    Need to determine whether we should perform a name_bind
    permission check between the socket and the port number. */
@@ -4006,8 +4046,28 @@ static int selinux_socket_bind(struct socket *sock, struct sockaddr *address, in
 
 	err = sock_has_perm(current, sk, SOCKET__BIND);
 	if (err)
+=======
+	if (sid == fsec->sid && fsec->isid == isec->sid &&
+	    fsec->pseqno == avc_policy_seqno())
+		/* No change since file_open check. */
+>>>>>>>
+<<<<<<<
 		goto out;
+=======
+{
+	struct file_security_struct *fsec;
+	struct inode_security_struct *isec;
+>>>>>>>
 
+<<<<<<<
+=======
+	return path_has_perm(cred, &file->f_path, open_file_to_av(file));
+}
+
+/* task security operations */
+
+static int selinux_task_create(unsigned long clone_flags)
+>>>>>>>
 	/*
 	 * If PF_INET or PF_INET6, check name_bind permission for the port.
 	 * Multiple address binding for SCTP is not supported yet: we just

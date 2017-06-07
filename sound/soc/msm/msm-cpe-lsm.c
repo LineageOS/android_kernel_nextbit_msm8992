@@ -1516,6 +1516,22 @@ static int msm_cpe_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			__func__);
 		err = -EINVAL;
 		break;
+<<<<<<<
+=======
+	}
+	case SNDRV_LSM_REG_SND_MODEL_V2:
+	case SNDRV_LSM_SET_PARAMS:
+		/*
+		 * In ideal cases, the compat_ioctl should never be called
+		 * with the above unlocked ioctl commands. Print error
+		 * and return error if it does.
+		 */
+		dev_err(rtd->dev,
+			"%s: Invalid cmd for compat_ioctl\n",
+			__func__);
+		err = -EINVAL;
+		break;
+>>>>>>>
 	default:
 		err = msm_cpe_lsm_ioctl_shared(substream, cmd, arg);
 		break;

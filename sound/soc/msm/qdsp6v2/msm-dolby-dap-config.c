@@ -22,6 +22,15 @@
 #define DOLBY_PARAM_VCNB_MAX_LENGTH 40
 #endif
 
+<<<<<<<
+=======
+#include "msm-dolby-dap-config.h"
+
+#ifndef DOLBY_PARAM_VCNB_MAX_LENGTH
+#define DOLBY_PARAM_VCNB_MAX_LENGTH 40
+#endif
+
+>>>>>>>
 /* dolby endp based parameters */
 struct dolby_dap_endp_params_s {
 	int device;
@@ -758,6 +767,25 @@ int msm_dolby_dap_param_to_set_control_put(struct snd_kcontrol *kcontrol,
 		default: {
 			/* cache the parameters */
 			dolby_dap_params_modified[idx] += 1;
+<<<<<<<
+=======
+			current_offset = dolby_dap_params_offset[idx] + offset;
+			if (current_offset >= TOTAL_LENGTH_DOLBY_PARAM) {
+				pr_err("%s: invalid offset %d at idx %d\n",
+				__func__, offset, idx);
+				return -EINVAL;
+			}
+			if ((0 == length) || (current_offset + length - 1
+				< current_offset) || (current_offset + length
+				> TOTAL_LENGTH_DOLBY_PARAM)) {
+				pr_err("%s: invalid length %d at idx %d\n",
+				__func__, length, idx);
+				return -EINVAL;
+			}
+			dolby_dap_params_length[idx] = length;
+			pr_debug("%s: param recvd deviceId=0x%x paramId=0x%x offset=%d length=%d\n",
+				__func__, device, param_id, offset, length);
+>>>>>>>
 			current_offset = dolby_dap_params_offset[idx] + offset;
 			if (current_offset >= TOTAL_LENGTH_DOLBY_PARAM) {
 				pr_err("%s: invalid offset %d at idx %d\n",
@@ -883,6 +911,17 @@ int msm_dolby_dap_param_to_get_control_put(struct snd_kcontrol *kcontrol,
 	dolby_dap_params_get.device_id = ucontrol->value.integer.value[0];
 	port_id = msm_dolby_dap_map_device_to_port_id(
 						dolby_dap_params_get.device_id);
+<<<<<<<
+=======
+	uint32_t param_payload_len =
+		DOLBY_PARAM_PAYLOAD_SIZE * sizeof(uint32_t);
+	int port_id, copp_idx, idx;
+	if (length > DOLBY_PARAM_VCNB_MAX_LENGTH || length <= 0) {
+		pr_err("%s Incorrect VCNB length", __func__);
+		ucontrol->value.integer.value[0] = 0;
+		return -EINVAL;
+	}
+>>>>>>>
 	for (idx = 0; idx < AFE_MAX_PORTS; idx++) {
 		port_id = dolby_dap_params_states.port_id[idx];
 		copp_idx = dolby_dap_params_states.copp_idx[idx];

@@ -1485,6 +1485,15 @@ void trace_find_cmdline(int pid, char comm[])
 	preempt_enable();
 }
 
+<<<<<<<
+=======
+	preempt_enable();
+}
+
+void tracing_record_cmdline(struct task_struct *tsk)
+{
+	if (atomic_read(&trace_record_cmdline_disabled) || !tracing_is_on())
+>>>>>>>
 void tracing_record_cmdline(struct task_struct *tsk)
 {
 	if (atomic_read(&trace_record_cmdline_disabled) || !tracing_is_on())
@@ -2434,6 +2443,7 @@ static void print_event_info(struct trace_buffer *buf, struct seq_file *m)
 	seq_puts(m, "#\n");
 }
 
+<<<<<<<
 static void print_func_help_header(struct trace_buffer *buf, struct seq_file *m)
 {
 	print_event_info(buf, m);
@@ -2441,6 +2451,8 @@ static void print_func_help_header(struct trace_buffer *buf, struct seq_file *m)
 	seq_puts(m, "#              | |       |          |         |\n");
 }
 
+=======
+>>>>>>>
 static void print_func_help_header_irq(struct trace_buffer *buf, struct seq_file *m)
 {
 	print_event_info(buf, m);
@@ -2479,6 +2491,15 @@ print_trace_header(struct seq_file *m, struct trace_iterator *iter)
 		   total,
 		   buf->cpu,
 #if defined(CONFIG_PREEMPT_NONE)
+<<<<<<<
+=======
+	seq_puts(m, "#              | |       |   ||||       |         |\n");
+}
+
+void
+print_trace_header(struct seq_file *m, struct trace_iterator *iter)
+{
+>>>>>>>
 		   "server",
 #elif defined(CONFIG_PREEMPT_VOLUNTARY)
 		   "desktop",
@@ -3657,6 +3678,15 @@ static int resize_buffer_duplicate_size(struct trace_buffer *trace_buf,
 				break;
 			per_cpu_ptr(trace_buf->data, cpu)->entries =
 				per_cpu_ptr(size_buf->data, cpu)->entries;
+<<<<<<<
+=======
+};
+
+static ssize_t
+tracing_set_trace_read(struct file *filp, char __user *ubuf,
+		       size_t cnt, loff_t *ppos)
+{
+>>>>>>>
 		}
 	} else {
 		ret = ring_buffer_resize(trace_buf->buffer,

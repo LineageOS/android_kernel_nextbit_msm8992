@@ -42,7 +42,7 @@
 
 #include "rcu.h"
 
-/* Forward declarations for rcutiny_plugin.h. */
+/* Forward declarations for tiny_plugin.h. */
 struct rcu_ctrlblk;
 static void invoke_rcu_callbacks(void);
 static void __rcu_process_callbacks(struct rcu_ctrlblk *rcp);
@@ -66,7 +66,7 @@ static void rcu_idle_enter_common(long long newval)
 	}
 	RCU_TRACE(trace_rcu_dyntick("Start", rcu_dynticks_nesting, newval));
 	if (!is_idle_task(current)) {
-		struct task_struct *idle = idle_task(smp_processor_id());
+		struct task_struct *idle __maybe_unused = idle_task(smp_processor_id());
 
 		RCU_TRACE(trace_rcu_dyntick("Error on entry: not idle task",
 					    rcu_dynticks_nesting, newval));
@@ -127,7 +127,7 @@ static void rcu_idle_exit_common(long long oldval)
 	}
 	RCU_TRACE(trace_rcu_dyntick("End", oldval, rcu_dynticks_nesting));
 	if (!is_idle_task(current)) {
-		struct task_struct *idle = idle_task(smp_processor_id());
+		struct task_struct *idle __maybe_unused = idle_task(smp_processor_id());
 
 		RCU_TRACE(trace_rcu_dyntick("Error on exit: not idle task",
 			  oldval, rcu_dynticks_nesting));
