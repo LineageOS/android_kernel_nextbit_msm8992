@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "da87b5cf_13ffdcab",
+        "filename": "drivers/hid/hid-ntrig.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 6351
+      },
+      "writtenOn": "2017-07-02T09:30:16Z",
+      "side": 1,
+      "message": "I returned -EINVAL here in my version, any for \"ok\" vs. error when you don\u0027t have any inputs?",
+      "revId": "7fd984de8cc7f11f482fa91663208cb43bf93a53",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
