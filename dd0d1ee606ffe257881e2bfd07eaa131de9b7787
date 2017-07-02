@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "da87b5cf_f334b8df",
+        "filename": "drivers/input/misc/fpc1020_tee.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 6351
+      },
+      "writtenOn": "2017-07-02T08:21:59Z",
+      "side": 1,
+      "message": "This looks wrong to me:\n\nenum {\n        /* screen: unblanked, hsync: on,  vsync: on */\n        FB_BLANK_UNBLANK       \u003d VESA_NO_BLANKING,\n\n        /* screen: blanked,   hsync: on,  vsync: on */\n        FB_BLANK_NORMAL        \u003d VESA_NO_BLANKING + 1,\n\n        /* screen: blanked,   hsync: on,  vsync: off */\n        FB_BLANK_VSYNC_SUSPEND \u003d VESA_VSYNC_SUSPEND + 1,\n\n        /* screen: blanked,   hsync: off, vsync: on */\n        FB_BLANK_HSYNC_SUSPEND \u003d VESA_HSYNC_SUSPEND + 1,\n\n        /* screen: blanked,   hsync: off, vsync: off */\n        FB_BLANK_POWERDOWN     \u003d VESA_POWERDOWN + 1\n};\n\nSeems like it would be the opposite:\n\ncase FB_BLANK_UNBLANK: ....; break;\ndefault: ...\n\nas all the other events are BLANK events, not UNBLANK events.\n\nAnd if you did that and it worked, I\u0027d still -1 it because technically you should really never have a default when you switch on an enum.  If a new value is added to the enum you want the compiler to tell you that this code needs to be updated and not just silently treat it as the default.  Therefore, I would replace default with a list of all the cases you are including there.",
+      "revId": "dd0d1ee606ffe257881e2bfd07eaa131de9b7787",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
