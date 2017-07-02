@@ -16,6 +16,7 @@
 #include "fih/nbq/dsi-panel-ctc52-nbq-otm1926c-1080p-video.dtsi"
 
 &mdss_mdp {
+	qcom,mdss-idle-power-collapse-enabled;
 	qcom,mdss-pref-prim-intf = "dsi";
 };
 
