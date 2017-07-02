@@ -16,6 +16,24 @@
       "revId": "dd0d1ee606ffe257881e2bfd07eaa131de9b7787",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "da87b5cf_ce6227ad",
+        "filename": "drivers/input/misc/fpc1020_tee.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 745,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-07-02T12:09:12Z",
+      "side": 1,
+      "message": "This is actually functionally correct. If you look at the touchscreen driver, we do the same thing: everything except FB_BLANK_POWERDOWN is a situation where we would want touchscreen on. I don\u0027t mind explicitly listing each event, however I would like to keep our code consistent (and yes, what I wrote isn\u0027t): we have a default case in the TS code after FB_BLANK_POWERDOWN. Thoughts on adding that here as well? If we do, we\u0027d have to swap the order of the event handling: we\u0027d need screen on events first, and then screen off events.",
+      "parentUuid": "da87b5cf_f334b8df",
+      "revId": "dd0d1ee606ffe257881e2bfd07eaa131de9b7787",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
