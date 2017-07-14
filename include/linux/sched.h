@@ -57,7 +57,6 @@ struct sched_param {
 
 int  su_instances(void);
 bool su_running(void);
-bool su_visible(void);
 void su_exec(void);
 void su_exit(void);
 

@@ -57,7 +57,7 @@ EXPORT_SYMBOL(iterate_dir);
 static bool hide_name(const char *name, int namlen)
 {
 	if (namlen == 2 && !memcmp(name, "su", 2))
-		if (!su_visible())
+		if (!su_running())
 			return true;
 	return false;
 }
