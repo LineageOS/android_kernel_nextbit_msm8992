@@ -3741,15 +3741,15 @@ static long _perf_ioctl(struct perf_event *event, unsigned int cmd,
 
 static long perf_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-        struct perf_event *event = file->private_data;
-        struct perf_event_context *ctx;
-        long ret;
+	struct perf_event *event = file->private_data;
+	struct perf_event_context *ctx;
+	long ret;
 
-        ctx = perf_event_ctx_lock(event);
-        ret = _perf_ioctl(event, cmd, arg);
-        perf_event_ctx_unlock(event, ctx);
+	ctx = perf_event_ctx_lock(event);
+	ret = _perf_ioctl(event, cmd, arg);
+	perf_event_ctx_unlock(event, ctx);
 
-        return ret;
+	return ret;
 }
 
 #ifdef CONFIG_COMPAT
@@ -7071,16 +7071,6 @@ SYSCALL_DEFINE5(perf_event_open,
 		if (flags & PERF_FLAG_FD_NO_GROUP)
 			group_leader = NULL;
 	}
-
-	/*
-	 * Take the group_leader's group_leader_mutex before observing
-	 * anything in the group leader that leads to changes in ctx,
-	 * many of which may be changing on another thread.
-	 * In particular, we want to take this lock before deciding
-	 * whether we need to move_group.
-	 */
-	if (group_leader)
-		mutex_lock(&group_leader->group_leader_mutex);
 
 	/*
 	 * Take the group_leader's group_leader_mutex before observing

@@ -1575,11 +1575,6 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 	}
 
-	if (mux >= e->max) {
-		pr_err("%s: Invalid mux value %d\n", __func__, mux);
-		return -EINVAL;
-	}
-
 	mutex_lock(&routing_lock);
 	switch (ucontrol->value.integer.value[0]) {
 	case 0:
