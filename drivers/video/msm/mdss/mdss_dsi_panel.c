@@ -784,10 +784,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 		on_cmds = &ctrl->post_dms_on_cmds;
 
 	if (on_cmds->cmd_cnt)
-	{
-		mdss_dsi_panel_bl_ctrl(pdata, 0); //JY added to fix NBQM-435 20151123
 		mdss_dsi_panel_cmds_send(ctrl, on_cmds, CMD_REQ_COMMIT);
-	}
 
 	if (pinfo->dfps_update == DFPS_IMMEDIATE_LCM_CLK_UPDATE_MODE) {
 		/* Restore the dynamic frame rate */
@@ -802,11 +799,6 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 	//Buda added for BBS log
 	if (1) panel_print_status(ctrl);
-	//Buda added for recovery backlight
-	if(strstr(saved_command_line, "androidboot.mode=1")!=NULL)
-	{
-		mdss_dsi_panel_bl_ctrl(pdata, 102);
-	}
 
 end:
 	pinfo->blank_state = MDSS_PANEL_BLANK_UNBLANK;
