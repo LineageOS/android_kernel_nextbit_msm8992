@@ -65,12 +65,15 @@ int nbq_hw_id;
 int Prj_info;
 /* end  NBQ - AlbertWu - [NBQ-1724] */
 
+static atomic_t i2c_suspended;
+static struct completion i2c_resume_done;
+static struct wakeup_source usbpd_irq_ws;
 
 static int  set_regulator_ldo31_configured(struct regulator *regulator)
 {
 	int ret;
-	
-	ret=regulator_disable(regulator);	
+
+	ret=regulator_disable(regulator);
 	if (ret < 0)
 		return ret;
 	ret = regulator_enable(regulator);
@@ -104,13 +107,13 @@ void select_USB_typeC_mode(uint8_t mode)
 			temp_reg |= 0x00;
 			hd3ss3220_platform_wr_reg8(CSR_REG_0A, temp_reg);
 			pr_info("Select DEFAULT mode \n");
-			break;		
+			break;
 		case MODE_SELECT_UFP :
 			temp_reg |= 0x10;
 			hd3ss3220_platform_wr_reg8(CSR_REG_0A, temp_reg);
 			pr_info("Select UFP mode \n");
 			break;
-		case MODE_SELECT_DFP: 
+		case MODE_SELECT_DFP:
 			temp_reg |= 0x20;
 			hd3ss3220_platform_wr_reg8(CSR_REG_0A, temp_reg);
 			pr_info("Select DFP mode \n");
@@ -136,23 +139,33 @@ static irqreturn_t usbpd_irq_handler(int irq, void *data)
 	//pr_info("[%s]",__FUNCTION__);
 /* end  NBQ - AlbertWu - [NBQM-880] */
 
+	if (atomic_read(&i2c_suspended)) {
+		__pm_stay_awake(&usbpd_irq_ws);
+		INIT_COMPLETION(i2c_resume_done);
+		wait_for_completion_timeout(&i2c_resume_done,
+				msecs_to_jiffies(50));
+	}
 
 	select_USB_typeC_mode(MODE_SELECT_UFP);
-	
+
 	USB_typeC_mode=check_USB_typeC_mode();
 	pr_info("\n USB_typeC_mode=%x",USB_typeC_mode);
 /*  NBQ - AlbertWu - [NBQM-880] - [USB] Add HD3ss3220 DVT2 device tree to NBQM project. */
 /*
-	msleep(300);	
+	msleep(300);
 	hd3ss3220_platform_block_read8(0x00, p_data, 12);
-	
+
 	for(i=0x00;i<=0x0A;i++)
 	{
 		pr_info("\n p_data[%d]=0x%x \n",i,p_data[i]);
 	}
 */
 /* end  NBQ - AlbertWu - [NBQM-880] */
-	
+
+
+	if (usbpd_irq_ws.active)
+		__pm_relax(&usbpd_irq_ws);
+
 	return  IRQ_HANDLED;
 }
 
@@ -214,10 +227,10 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 		dev_err(&client->dev, "gpio_request_array failed");
 		return -EINVAL;
 	}
-	
+
 	irq_qpio= gpio_to_irq(hd3ss3220_gpio[INT_INDEX].gpio);
 	usbpd_pf_i2c_init(client->adapter);
-	
+
 	regulator_vdd = regulator_get(&client->dev,"hd3ss3220vdd");
 	if (IS_ERR(regulator_vdd)) {
 	    pr_err("%s: Failed to get hd3ss3220vdd\n", __func__);
@@ -226,7 +239,7 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	    return ret;
 	}
 	ret = regulator_enable(regulator_vdd);
-	if (ret) {	
+	if (ret) {
 	      pr_err("%s: Failed to enable vdd-supply\n",__func__);
 	      regulator_disable(regulator_vdd);
 	      regulator_put(regulator_vdd);
@@ -244,9 +257,9 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 		    regulator_put(regulator_vdd);
 		    return ret;
 		}
-	
+
 		ret = regulator_enable(regulator_vdd);
-		if (ret) {	
+		if (ret) {
 		      pr_err("%s: Failed to enable USB 3.0 re-driver\n",__func__);
 		      regulator_disable(regulator_vdd);
 		      regulator_put(regulator_vdd);
@@ -260,21 +273,25 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	pr_info("NBQ_HW_ID : %x",nbq_hw_id);
 /*  NBQ - AlbertWu - [NBQ-1608] - [USB] . Configure New HD3SS3220 Chip */
 	if( (Prj_info == FIH_PRJ_VZW) || (Prj_info == FIH_PRJ_NBQ && nbq_hw_id >= FIH_REV_EVT1C) )
-		set_regulator_ldo31_configured(regulator_vdd);	
+		set_regulator_ldo31_configured(regulator_vdd);
 /* end  NBQ - AlbertWu - [NBQ-1608] */
 
 /* end  NBQ - AlbertWu - [NBQ-1487] */
 	pr_info("USB 3.0 re-driver power on .....");
 
-	rc = request_threaded_irq(irq_qpio, NULL, usbpd_irq_handler, 
-			IRQF_TRIGGER_FALLING | IRQF_ONESHOT, HD3SS3220_DRIVER_NAME, 
-			&client->dev);			
+	init_completion(&i2c_resume_done);
+	wakeup_source_init(&usbpd_irq_ws, "hd3ss3220-irq");
+	atomic_set(&i2c_suspended, 0);
+
+	rc = request_threaded_irq(irq_qpio, NULL, usbpd_irq_handler,
+			IRQF_TRIGGER_FALLING | IRQF_ONESHOT, HD3SS3220_DRIVER_NAME,
+			&client->dev);
 
 	if (rc < 0) {
 		dev_err(&client->dev, "request_threaded_irq failed, status\n");
 		return -1;
 	}
-	
+
 
 
 	pr_info("Driver is intialised properly \n");
@@ -286,6 +303,26 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	{}
 }; */
 
+static int hd3ss3220_i2c_resume(struct device *dev)
+{
+	atomic_set(&i2c_suspended, 0);
+	complete(&i2c_resume_done);
+
+	return 0;
+}
+
+static int hd3ss3220_i2c_suspend(struct device *dev)
+{
+	atomic_set(&i2c_suspended, 1);
+
+	return 0;
+}
+
+static const struct dev_pm_ops hd3ss3220_i2c_pm_ops = {
+	.resume  = hd3ss3220_i2c_resume,
+	.suspend = hd3ss3220_i2c_suspend,
+};
+
 static struct i2c_device_id hd3ss3220_i2c_id1[] = {
 	{ HD3SS3220_DRIVER_NAME, HD3SS3220_DEVICE_I2C_ADDR_LOW},
 	{}
@@ -293,14 +330,14 @@ static struct i2c_device_id hd3ss3220_i2c_id1[] = {
 static struct i2c_device_id hd3ss3220_i2c_id2[] = {
 	{ HD3SS3220_DRIVER_NAME, HD3SS3220_DEVICE_I2C_ADDR_HIGH},
 	{}
-};	
+};
 
 /* end  NBQ - AlbertWu - [NBQ-1056] */
 /*  NBQ - AlbertWu - [NBQ-1608] - [USB]  Configure New HD3SS3220 Chip */
 static struct i2c_device_id hd3ss3220_i2c_id3[] = {
 	{ HD3SS3220_DRIVER_NAME, NEW_HD3SS3220_DEVICE_I2C_ADDR_HIGH},
 	{}
-};	
+};
 /* end  NBQ - AlbertWu - [NBQ-1608] */
 static const struct of_device_id hd3ss3220_match_table[] = {
 	{.compatible = COMPATIBLE_NAME},
@@ -312,10 +349,11 @@ static struct i2c_driver hd3ss3220_i2c_driver = {
 		.name = HD3SS3220_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = hd3ss3220_match_table,
+		.pm = &hd3ss3220_i2c_pm_ops,
 	},
 	.probe = hd3ss3220_i2c_probe,
 	.remove =  hd3ss3220_i2c_remove,
-/*  NBQ - AlbertWu - [NBQ-1056] - [USB] Judge HW ID in HD3SS3220 USB type C driver. */	
+/*  NBQ - AlbertWu - [NBQ-1056] - [USB] Judge HW ID in HD3SS3220 USB type C driver. */
 	.id_table = hd3ss3220_i2c_id1, //hd3ss3220_i2c_id
 /* end  NBQ - AlbertWu - [NBQ-1056] */
 };
