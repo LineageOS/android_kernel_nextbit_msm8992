@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "27917666_e72a7843",
+        "filename": "arch/arm64/boot/dts/fih/nbq/dsi-panel-ctc52-nbq-otm1926c-1080p-cmd.dtsi",
+        "patchSetId": 1
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-08-13T16:04:57Z",
+      "side": 0,
+      "message": "These two commands are swapped in the post-cmd",
+      "revId": "077a33446ee6f1ac40e7ccd5d62b5e237bd84f03",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b00cd30a_c830dc8a",
+        "filename": "arch/arm64/boot/dts/fih/nbq/dsi-panel-ctc52-nbq-otm1926c-1080p-cmd.dtsi",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-08-13T16:04:57Z",
+      "side": 0,
+      "message": "This command is removed entirely - maybe this is the one causing the garbage?",
+      "revId": "077a33446ee6f1ac40e7ccd5d62b5e237bd84f03",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "396fa60f_ebe4e187",
+        "filename": "arch/arm64/boot/dts/fih/nbq/dsi-panel-ctc52-nbq-otm1926c-1080p-cmd.dtsi",
+        "patchSetId": 1
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2017-08-13T16:04:57Z",
+      "side": 0,
+      "message": "This is the \"cabc\" command, which happens to be the actual panel on command",
+      "revId": "077a33446ee6f1ac40e7ccd5d62b5e237bd84f03",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
