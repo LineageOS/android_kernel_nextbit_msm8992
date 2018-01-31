@@ -65,6 +65,8 @@ int nbq_hw_id;
 int Prj_info;
 /* end  NBQ - AlbertWu - [NBQ-1724] */
 
+static atomic_t i2c_suspended;
+static struct completion i2c_resume_done;
 
 static int  set_regulator_ldo31_configured(struct regulator *regulator)
 {
@@ -131,11 +133,20 @@ void select_USB_typeC_mode(uint8_t mode)
 static irqreturn_t usbpd_irq_handler(int irq, void *data)
 {
 	uint8_t USB_typeC_mode;
+	struct device *dev = data;
+	bool wakeup_active = false;
 /*  NBQ - AlbertWu - [NBQM-880] - [USB] Add HD3ss3220 DVT2 device tree to NBQM project. */
 	//uint8_t p_data[12]={0x00},i;
 	//pr_info("[%s]",__FUNCTION__);
 /* end  NBQ - AlbertWu - [NBQM-880] */
 
+	if (atomic_read(&i2c_suspended)) {
+		wakeup_active = true;
+		pm_stay_awake(dev);
+		INIT_COMPLETION(i2c_resume_done);
+		wait_for_completion_timeout(&i2c_resume_done,
+				msecs_to_jiffies(50));
+	}
 
 	select_USB_typeC_mode(MODE_SELECT_UFP);
 	
@@ -153,6 +164,9 @@ static irqreturn_t usbpd_irq_handler(int irq, void *data)
 */
 /* end  NBQ - AlbertWu - [NBQM-880] */
 	
+	if (wakeup_active)
+		pm_relax(dev);
+
 	return  IRQ_HANDLED;
 }
 
@@ -266,6 +280,9 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 /* end  NBQ - AlbertWu - [NBQ-1487] */
 	pr_info("USB 3.0 re-driver power on .....");
 
+	init_completion(&i2c_resume_done);
+	atomic_set(&i2c_suspended, 0);
+
 	rc = request_threaded_irq(irq_qpio, NULL, usbpd_irq_handler, 
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT, HD3SS3220_DRIVER_NAME, 
 			&client->dev);			
@@ -285,6 +302,24 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	{ HD3SS3220_DRIVER_NAME, 0x60},
 	{}
 }; */
+
+static int hd3ss3220_i2c_resume(struct device *dev)
+{
+	atomic_set(&i2c_suspended, 0);
+	complete(&i2c_resume_done);
+	return 0;
+}
+
+static int hd3ss3220_i2c_suspend(struct device *dev)
+{
+	atomic_set(&i2c_suspended, 1);
+	return 0;
+}
+
+static const struct dev_pm_ops hd3ss3220_i2c_pm_ops = {
+	.runtime_resume  = hd3ss3220_i2c_resume,
+	.runtime_suspend = hd3ss3220_i2c_suspend,
+};
 
 static struct i2c_device_id hd3ss3220_i2c_id1[] = {
 	{ HD3SS3220_DRIVER_NAME, HD3SS3220_DEVICE_I2C_ADDR_LOW},
@@ -312,6 +347,7 @@ static struct i2c_driver hd3ss3220_i2c_driver = {
 		.name = HD3SS3220_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = hd3ss3220_match_table,
+		.pm = &hd3ss3220_i2c_pm_ops,
 	},
 	.probe = hd3ss3220_i2c_probe,
 	.remove =  hd3ss3220_i2c_remove,
