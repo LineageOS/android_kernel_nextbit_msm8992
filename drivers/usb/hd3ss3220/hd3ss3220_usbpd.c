@@ -137,7 +137,7 @@ static irqreturn_t usbpd_irq_handler(int irq, void *data)
 /* end  NBQ - AlbertWu - [NBQM-880] */
 
 
-	select_USB_typeC_mode(MODE_SELECT_UFP);
+	select_USB_typeC_mode(MODE_SELECT_DRP);
 	
 	USB_typeC_mode=check_USB_typeC_mode();
 	pr_info("\n USB_typeC_mode=%x",USB_typeC_mode);
