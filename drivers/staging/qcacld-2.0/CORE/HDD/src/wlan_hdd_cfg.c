@@ -59,6 +59,9 @@
 #include <csrApi.h>
 #include <pmcApi.h>
 #include <wlan_hdd_misc.h>
+#ifdef CONFIG_MACH_FIH_NBQ
+#include <fih/share/e2p.h>
+#endif
 
 #if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 static void
@@ -5725,6 +5728,28 @@ static void update_mac_from_string(hdd_context_t *pHddCtx, tCfgIniEntry *macTabl
  * This function tries to update mac address from cfg file.
  * It overwrites the MAC address if config file exist.
  */
+#ifdef CONFIG_MACH_FIH_NBQ
+VOS_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx __unused)
+{
+   int i = 0;
+   tSirMacAddr customMacAddr;
+   FIH_E2P_DATA_ST *e2p;
+
+   e2p = (FIH_E2P_DATA_ST *)ioremap(FIH_E2P_ST_ADDR, sizeof(FIH_E2P_DATA_ST));
+   if (e2p == NULL) {
+      hddLog(VOS_TRACE_LEVEL_WARN, "%s: ioremap fail\n", __func__);
+      return VOS_STATUS_E_FAILURE;
+   }
+
+   for (i = 0; i < 5; i++) {
+      customMacAddr[i] = e2p->wifi_mac[i];
+   }
+
+   sme_SetCustomMacAddr(customMacAddr);
+
+   iounmap(e2p);
+   return VOS_STATUS_SUCCESS;
+#else
 VOS_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 {
    int status, i = 0;
@@ -5810,6 +5835,7 @@ VOS_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 config_exit:
    release_firmware(fw);
    return vos_status;
+#endif
 }
 
 static VOS_STATUS hdd_apply_cfg_ini( hdd_context_t *pHddCtx, tCfgIniEntry* iniTable, unsigned long entries)
