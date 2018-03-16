@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c474782c_4db8b0fa",
+        "filename": "drivers/base/Kconfig",
+        "patchSetId": 1
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 15175
+      },
+      "writtenOn": "2018-03-16T17:58:59Z",
+      "side": 1,
+      "message": "`default n` is unneeded, it already is the default without being explicitly set as such.",
+      "revId": "2ea61defcf007d90cf5db2a9ac792d6903b9d693",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
