@@ -16,6 +16,24 @@
       "revId": "2ea61defcf007d90cf5db2a9ac792d6903b9d693",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5ca6b77d_930ef378",
+        "filename": "drivers/base/Kconfig",
+        "patchSetId": 1
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2018-03-16T19:56:14Z",
+      "side": 1,
+      "message": "this is an upstream patch, I\u0027m not touching it more than necessary.",
+      "parentUuid": "c474782c_4db8b0fa",
+      "revId": "2ea61defcf007d90cf5db2a9ac792d6903b9d693",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
