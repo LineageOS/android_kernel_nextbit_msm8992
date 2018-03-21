@@ -156,7 +156,7 @@
 		cm,mdss-livedisplay-cabc-video-value = <0x03>;
 
 		cm,mdss-livedisplay-post-cmd = [
-			05 01 00 00 10 00 02 29 00
+			05 01 00 00 28 00 02 29 00
 			05 01 00 00 78 00 02 11 00
 		];
 
