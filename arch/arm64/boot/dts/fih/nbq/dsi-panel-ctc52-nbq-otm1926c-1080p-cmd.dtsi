@@ -84,10 +84,6 @@
 		qcom,mdss-dsi-reset-sequence = <0 11>, <1 2>, <0 1>, <1 20>;
 		qcom,mdss-pan-physical-width-dimension = <65>;
 		qcom,mdss-pan-physical-height-dimension = <115>;
-		qcom,mdss-dsi-pan-enable-dynamic-fps;
-		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_lcm_clk_update_mode";
-		qcom,mdss-dsi-min-refresh-rate = <24>;
-		qcom,mdss-dsi-max-refresh-rate = <60>;
 		qcom,mdss-dsi-panel-status-check-mode = "te_signal_check";
 		qcom,mdss-dsi-tx-eot-append;
 		qcom,esd-check-enabled;
