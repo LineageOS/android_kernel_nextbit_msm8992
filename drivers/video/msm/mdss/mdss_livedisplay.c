@@ -40,6 +40,8 @@
  *      the panel devicetree. Up to three levels.
  * aco: Automatic Contrast Optimization. Must be configured in
  *      the panel devicetree. Boolean.
+ * fps: Panel Frame Rate Control. Must be configured in
+ *      the panel devicetree. Up to three levels.
  *
  * preset: Arbitrary DSI commands, up to 10 may be configured.
  *      Useful for gamma calibration.
@@ -278,6 +280,20 @@ static int mdss_livedisplay_update_locked(struct mdss_dsi_ctrl_pdata *ctrl_pdata
 
 	kfree(cmd_buf);
 
+	// Send panel frame rate command when we're all done
+	if ((mlc->caps & MODE_FPS) && (types & MODE_FPS)) {
+		memset(&dsi_cmds, 0, sizeof(struct dsi_panel_cmds));
+		ret = parse_dsi_cmds(mlc, &dsi_cmds, mlc->fps_cmds[mlc->fps],
+				mlc->fps_cmds_len[mlc->fps]);
+		if (ret == 0) {
+			mdss_dsi_panel_cmds_send(ctrl_pdata, &dsi_cmds, CMD_REQ_COMMIT);
+			kfree(dsi_cmds.buf);
+			kfree(dsi_cmds.cmds);
+		} else {
+			pr_err("%s: error parsing DSI command! ret=%d", __func__, ret);
+		}
+	}
+
 	// Restore saved RGB settings
 	mdss_livedisplay_set_rgb_locked(mlc->mfd);
 
@@ -484,6 +500,59 @@ static ssize_t mdss_livedisplay_get_num_presets(struct device *dev,
 	return sprintf(buf, "%d\n", mlc->num_presets);
 }
 
+static ssize_t mdss_livedisplay_get_fps(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
+	struct mdss_livedisplay_ctx *mlc = get_ctx(mfd);
+
+	return sprintf(buf, "%d\n", mlc->fps);
+}
+
+static ssize_t mdss_livedisplay_set_fps(struct device *dev,
+							   struct device_attribute *attr,
+							   const char *buf, size_t count)
+{
+	int value = 0;
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
+	struct mdss_livedisplay_ctx *mlc = get_ctx(mfd);
+
+	mutex_lock(&mlc->lock);
+
+	sscanf(buf, "%du", &value);
+	if (value < 0 || value >= mlc->num_fps_cmds)
+		return -EINVAL;
+
+	mlc->fps = value;
+	mdss_livedisplay_update_locked(get_ctrl(mfd), MODE_FPS);
+
+	mutex_unlock(&mlc->lock);
+
+	return count;
+}
+
+static ssize_t mdss_livedisplay_get_fps_rate(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
+	struct mdss_livedisplay_ctx *mlc = get_ctx(mfd);
+
+	return sprintf(buf, "%d\n", mlc->fps_rates[mlc->fps]);
+}
+
+static ssize_t mdss_livedisplay_get_num_fps(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct fb_info *fbi = dev_get_drvdata(dev);
+	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
+	struct mdss_livedisplay_ctx *mlc = get_ctx(mfd);
+
+	return sprintf(buf, "%d\n", mlc->num_fps_cmds);
+}
+
 static ssize_t mdss_livedisplay_get_rgb(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -550,12 +619,16 @@ static DEVICE_ATTR(color_enhance, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_
 static DEVICE_ATTR(aco, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_aco, mdss_livedisplay_set_aco);
 static DEVICE_ATTR(preset, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_preset, mdss_livedisplay_set_preset);
 static DEVICE_ATTR(num_presets, S_IRUGO, mdss_livedisplay_get_num_presets, NULL);
+static DEVICE_ATTR(fps, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_fps, mdss_livedisplay_set_fps);
+static DEVICE_ATTR(fps_rate, S_IRUGO, mdss_livedisplay_get_fps_rate, NULL);
+static DEVICE_ATTR(num_fps, S_IRUGO, mdss_livedisplay_get_num_fps, NULL);
 static DEVICE_ATTR(rgb, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_rgb, mdss_livedisplay_set_rgb);
 
 int mdss_livedisplay_parse_dt(struct device_node *np, struct mdss_panel_info *pinfo)
 {
 	int rc = 0, i = 0;
 	struct mdss_livedisplay_ctx *mlc;
+	char fps_name[64];
 	char preset_name[64];
 	const char *link_state;
 	uint32_t tmp = 0;
@@ -627,6 +700,28 @@ int mdss_livedisplay_parse_dt(struct device_node *np, struct mdss_panel_info *pi
 	mlc->post_cmds = of_get_property(np,
 			"cm,mdss-livedisplay-post-cmd", &mlc->post_cmds_len);
 
+	for (i = 0; i < MAX_FPS; i++) {
+		memset(fps_name, 0, sizeof(fps_name));
+		snprintf(fps_name, 64, "%s-%d", "cm,mdss-livedisplay-fps-cmd", i);
+		mlc->fps_cmds[mlc->num_fps_cmds] = of_get_property(np, fps_name,
+				&mlc->fps_cmds_len[mlc->num_fps_cmds]);
+		memset(fps_name, 0, sizeof(fps_name));
+		snprintf(fps_name, 64, "%s-%d", "cm,mdss-livedisplay-fps-rate", i);
+		rc = of_property_read_u32(np, fps_name, &tmp);
+		if (rc == 0) {
+			mlc->fps_rates[mlc->num_fps_cmds] = (uint8_t)(tmp & 0xFF);
+			if (mlc->fps_cmds_len[mlc->num_fps_cmds] > 0)
+				mlc->num_fps_cmds++;
+		} else {
+			break;
+		}
+	}
+
+	if (mlc->num_fps_cmds) {
+		mlc->caps |= MODE_FPS;
+		mlc->fps = mlc->num_fps_cmds - 1;
+	}
+
 	mlc->r = mlc->g = mlc->b = 32768;
 
 	pinfo->livedisplay = mlc;
@@ -674,6 +769,18 @@ int mdss_livedisplay_create_sysfs(struct msm_fb_data_type *mfd)
 		if (rc)
 			goto sysfs_err;
 		rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_num_presets.attr);
+		if (rc)
+			goto sysfs_err;
+	}
+
+	if (mlc->caps & MODE_FPS) {
+		rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_fps.attr);
+		if (rc)
+			goto sysfs_err;
+		rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_fps_rate.attr);
+		if (rc)
+			goto sysfs_err;
+		rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_num_fps.attr);
 		if (rc)
 			goto sysfs_err;
 	}

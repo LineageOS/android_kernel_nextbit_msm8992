@@ -20,6 +20,8 @@
 #include "mdss_dsi.h"
 #include "mdss_fb.h"
 
+#define MAX_FPS 3
+
 #define MAX_PRESETS 10
 
 struct mdss_livedisplay_ctx {
@@ -36,6 +38,10 @@ struct mdss_livedisplay_ctx {
 	unsigned int ce_off_cmds_len;
 	unsigned int ce_on_cmds_len;
 
+	const uint8_t *fps_cmds[MAX_FPS];
+	unsigned int fps_cmds_len[MAX_FPS];
+	uint8_t fps_rates[MAX_FPS];
+
 	const uint8_t *presets[MAX_PRESETS];
 	unsigned int presets_len[MAX_PRESETS];
 
@@ -45,6 +51,7 @@ struct mdss_livedisplay_ctx {
 	const uint8_t *post_cmds;
 	unsigned int post_cmds_len;
 
+	unsigned int fps;
 	unsigned int preset;
 	unsigned int cabc_level;
 	unsigned int sre_level;
@@ -53,6 +60,7 @@ struct mdss_livedisplay_ctx {
 
 	unsigned int link_state;
 
+	unsigned int num_fps_cmds;
 	unsigned int num_presets;
 	unsigned int caps;
 
@@ -84,6 +92,7 @@ enum {
 	MODE_AUTO_CONTRAST	= 0x04,
 	MODE_COLOR_ENHANCE	= 0x08,
 	MODE_PRESET		= 0x10,
+	MODE_FPS		= 0x20,
 	MODE_UPDATE_ALL		= 0xFF,
 };
 
