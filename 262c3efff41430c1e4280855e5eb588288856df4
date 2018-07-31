@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3e229ea5_e637aba1",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 5503
+      },
+      "writtenOn": "2018-07-31T16:22:12Z",
+      "side": 1,
+      "message": "Check for failure.",
+      "revId": "262c3efff41430c1e4280855e5eb588288856df4",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
