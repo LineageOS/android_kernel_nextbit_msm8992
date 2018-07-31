@@ -1,0 +1,251 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "94f4b9bb_69f5e5e5",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "nice to have, but not necessary as a separate var, since this is only used in the match table.",
+      "range": {
+        "startLine": 28,
+        "startChar": 8,
+        "endLine": 28,
+        "endChar": 23
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "12b756be_e7652434",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "Looks like this can go in the client_data struct.",
+      "range": {
+        "startLine": 48,
+        "startChar": 27,
+        "endLine": 48,
+        "endChar": 46
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2dda1976_70da11cd",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "Why are you keeping a static reference to this? You can store a reference in client_data, or store a reference to the i2c client in client_data and obtain the bus reference through that.",
+      "range": {
+        "startLine": 49,
+        "startChar": 27,
+        "endLine": 49,
+        "endChar": 34
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b398bc8d_061f1b75",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "I think these can be local to the functions they are used in. It should be safe to allocate these on the stack, rather than waste global memory.",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 53,
+        "endChar": 27
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5708349c_b3f2a0b5",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "indentation",
+      "range": {
+        "startLine": 83,
+        "startChar": 0,
+        "endLine": 91,
+        "endChar": 9
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c76c7a3a_ac05cb4f",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "It\u0027s easier to read if you break first, that way the follow-up code ( pr_err(...); msleep(20) ) doesn\u0027t need it\u0027s own separate indented block.",
+      "range": {
+        "startLine": 104,
+        "startChar": 2,
+        "endLine": 106,
+        "endChar": 3
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "02f0c775_dcb396cc",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "Do you ever need to worry about cancelling existing work?",
+      "range": {
+        "startLine": 113,
+        "startChar": 1,
+        "endLine": 113,
+        "endChar": 22
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ee20d42a_ab69b38f",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "nit: kernel commenting style is /* ... */",
+      "range": {
+        "startLine": 125,
+        "startChar": 1,
+        "endLine": 125,
+        "endChar": 25
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2df97a27_9bf39d22",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "Doesn\u0027t enabling in probe/disabling in remove mean you leave the regulator on while suspended?",
+      "range": {
+        "startLine": 144,
+        "startChar": 7,
+        "endLine": 144,
+        "endChar": 23
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c3b8c053_338fa6ca",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 218,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "do you need to cancel any outstanding work?",
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "44af1734_22969f7a",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 241,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-07-31T08:19:40Z",
+      "side": 1,
+      "message": "It\u0027s probably nicer if you pass the i2c_driver struct as a parameter, rather than refer to it directly in this function.",
+      "range": {
+        "startLine": 241,
+        "startChar": 39,
+        "endLine": 241,
+        "endChar": 43
+      },
+      "revId": "94830d167437fcf365ddeb7ab5c080950906e71c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
