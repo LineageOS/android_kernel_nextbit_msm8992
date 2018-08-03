@@ -22,6 +22,30 @@
       "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b2aebb58_27479b46",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2018-08-03T21:04:52Z",
+      "side": 1,
+      "message": "Unfortunately, no. 3.10 needs a correct id_table or it won\u0027t be probed.",
+      "parentUuid": "bcc4460b_45ea8c70",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 254,
+        "endChar": 52
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
     }
   ]
 }
