@@ -68,7 +68,7 @@ static void write_hd3ss3220_mode(struct work_struct *work)
 		ret = i2c_transfer(data->i2c_bus, &msg, 1);
 		if (ret == 1)
 			break;
-		pr_err("%s: Retrying I2C read at addr=0x%x of register=0x%x errno=%d try=%d\n",
+		pr_err("%s: Retrying I2C read at addr=0x%x of register=0x%x err=%d try=%d\n",
 				__func__, data->addr, msg_buf[0], ret, i);
 		msleep(20);
 	}
@@ -85,7 +85,7 @@ static void write_hd3ss3220_mode(struct work_struct *work)
 		ret = i2c_transfer(data->i2c_bus, &msg, 1);
 		if (ret == 1)
 			break;
-		pr_err("%s: Retrying I2C write at addr=0x%x of register=0x%x value=0x%x errno=%d try=%d\n",
+		pr_err("%s: Retrying I2C write at addr=0x%x of register=0x%x value=0x%x err=%d try=%d\n",
 				__func__, data->addr, msg_buf[0], msg_buf[1],
 				ret, i);
 		msleep(20);
@@ -119,25 +119,29 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	/* Enable the regulators */
 	data->hd3ss3220vdd = regulator_get(&client->dev, "hd3ss3220vdd");
 	if (IS_ERR(data->hd3ss3220vdd)) {
-		pr_err("%s: Failed to get hd3ss3220vdd\n", __func__);
 		ret = PTR_ERR(data->hd3ss3220vdd);
+		pr_err("%s: Failed to get hd3ss3220vdd supply err=%d\n",
+				__func__, ret);
 		goto err_hd3ss3220vdd_reg_get;
 	}
 	ret = regulator_enable(data->hd3ss3220vdd);
 	if (ret) {
-		pr_err("%s: Failed to enable vdd-supply\n", __func__);
+		pr_err("%s: Failed to enable hd3ss3220vdd supply err=%d\n",
+				__func__, ret);
 		goto err_hd3ss3220vdd_reg_en;
 	}
 
 	data->usb_redriver = regulator_get(&client->dev, "usb_redriver");
 	if (IS_ERR(data->usb_redriver)) {
-		pr_err("%s: Failed to get usb_redriver\n", __func__);
 		ret = PTR_ERR(data->usb_redriver);
+		pr_err("%s: Failed to get usb_redriver supply err=%d\n",
+				__func__, ret);
 		goto err_redriver_reg_get;
 	}
 	ret = regulator_enable(data->usb_redriver);
 	if (ret) {
-		pr_err("%s: Failed to enable vdd-supply\n", __func__);
+		pr_err("%s: Failed to enable usb_redriver supply err=%d\n",
+				__func__, ret);
 		goto err_redriver_reg_en;
 	}
 
@@ -153,7 +157,7 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 	ret = of_get_named_gpio(client->dev.of_node,
 			"ti-hd3ss3220,irq-gpio", 0);
 	if (ret < 0) {
-		pr_err("%s: Failed to get IRQ gpio\n", __func__);
+		pr_err("%s: Failed to get IRQ gpio err=%d\n", __func__, ret);
 		goto err_gpio_failed;
 	}
 
@@ -161,7 +165,8 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 
 	ret = gpio_to_irq(data->gpio);
 	if (ret < 0) {
-		pr_err("%s: Failed to get IRQ from gpio\n", __func__);
+		pr_err("%s: Failed to get IRQ from gpio err=%d\n", __func__,
+				ret);
 		goto err_irq_failed;
 	}
 
@@ -172,7 +177,8 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			HD3SS3220_DRIVER_NAME, &client->dev);
 	if (ret) {
-		pr_err("%s: Failed to get IRQ handler\n", __func__);
+		pr_err("%s: Failed to create IRQ handler err=%d\n", __func__,
+				ret);
 		goto err_irq_failed;
 	}
 
