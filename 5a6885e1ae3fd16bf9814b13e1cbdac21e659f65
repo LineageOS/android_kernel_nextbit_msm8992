@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bcc4460b_45ea8c70",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2018-08-03T21:03:48Z",
+      "side": 1,
+      "message": "Can\u0027t we do this from dts?",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 254,
+        "endChar": 52
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
