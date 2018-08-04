@@ -2,6 +2,75 @@
   "comments": [
     {
       "key": {
+        "uuid": "e5530337_6991a427",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-04T22:28:27Z",
+      "side": 1,
+      "message": "It\u0027s probably better to use a fixed width type.",
+      "range": {
+        "startLine": 46,
+        "startChar": 1,
+        "endLine": 46,
+        "endChar": 9
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1ffaf4e1_ef650a21",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-04T22:28:27Z",
+      "side": 1,
+      "message": "I\u0027m going to guess you probably want these to be signed, in case of error.",
+      "range": {
+        "startLine": 47,
+        "startChar": 1,
+        "endLine": 47,
+        "endChar": 9
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "34ea842c_503f63b3",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-04T22:28:27Z",
+      "side": 1,
+      "message": "GPIO_IS_VALID is probably a better check",
+      "range": {
+        "startLine": 159,
+        "startChar": 1,
+        "endLine": 159,
+        "endChar": 15
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bcc4460b_45ea8c70",
         "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
         "patchSetId": 6
@@ -37,6 +106,30 @@
       "side": 1,
       "message": "Unfortunately, no. 3.10 needs a correct id_table or it won\u0027t be probed.",
       "parentUuid": "bcc4460b_45ea8c70",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 254,
+        "endChar": 52
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ce2e8688_ff23bba0",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 254,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-04T22:28:27Z",
+      "side": 1,
+      "message": "You could do it if you knew which revision of the board had specific revisions of the hd3ss chip. Also it\u0027s super weird that EVT variants are called out specifically. I\u0027d be really surprised if both of these variants actually made it out to public release.",
+      "parentUuid": "b2aebb58_27479b46",
       "range": {
         "startLine": 251,
         "startChar": 0,
