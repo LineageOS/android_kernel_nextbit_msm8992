@@ -48,6 +48,30 @@
     },
     {
       "key": {
+        "uuid": "8d3d58fc_1090c93b",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2018-08-05T00:10:46Z",
+      "side": 1,
+      "message": "The methods I\u0027m calling use this as \"unsigned\", so dunno. I\u0027m checking ret for error, and then assigning these to ret if it\u0027s successful.",
+      "parentUuid": "1ffaf4e1_ef650a21",
+      "range": {
+        "startLine": 47,
+        "startChar": 1,
+        "endLine": 47,
+        "endChar": 9
+      },
+      "revId": "5a6885e1ae3fd16bf9814b13e1cbdac21e659f65",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "34ea842c_503f63b3",
         "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
         "patchSetId": 6
