@@ -65,9 +65,9 @@
 	};
 
 	i2c@f9967000 { /* BLSP2 QUP5 */
-		hd3ss3220@61 {
+		hd3ss3220@67 {
 			compatible = "ti,hd3ss3220";
-			reg = <0x61>;
+			reg = <0x67>;
 			interrupt-parent = <&msm_gpio>;
 			interrupts = <9 0x2>;
 			hd3ss3220vdd-supply = <&pm8994_l19>;
