@@ -35,7 +35,6 @@
 struct hd3ss3220_client_data {
 	struct i2c_adapter *i2c_bus;
 	struct regulator *hd3ss3220vdd;
-	struct regulator *usb_redriver;
 	struct work_struct hd3ss3220_mode_work;
 	u16 addr;
 	u32 gpio;
@@ -125,20 +124,6 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 		goto err_hd3ss3220vdd_reg_en;
 	}
 
-	data->usb_redriver = regulator_get(&client->dev, "usb_redriver");
-	if (IS_ERR(data->usb_redriver)) {
-		ret = PTR_ERR(data->usb_redriver);
-		pr_err("%s: Failed to get usb_redriver supply err=%d\n",
-				__func__, ret);
-		goto err_redriver_reg_get;
-	}
-	ret = regulator_enable(data->usb_redriver);
-	if (ret) {
-		pr_err("%s: Failed to enable usb_redriver supply err=%d\n",
-				__func__, ret);
-		goto err_redriver_reg_en;
-	}
-
 	/* Setup I2C messages for writing device mode */
 	data->addr = client->addr & 0x7F;
 	data->i2c_bus = client->adapter;
@@ -182,10 +167,6 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 err_irq_failed:
 	gpio_free(data->gpio);
 err_gpio_failed:
-	regulator_disable(data->usb_redriver);
-err_redriver_reg_en:
-	regulator_put(data->usb_redriver);
-err_redriver_reg_get:
 	regulator_disable(data->hd3ss3220vdd);
 err_hd3ss3220vdd_reg_en:
 	regulator_put(data->hd3ss3220vdd);
@@ -203,8 +184,6 @@ static int hd3ss3220_i2c_remove(struct i2c_client *client)
 		cancel_work_sync(&data->hd3ss3220_mode_work);
 		free_irq(data->irq, &client->dev);
 		gpio_free(data->gpio);
-		regulator_disable(data->usb_redriver);
-		regulator_put(data->usb_redriver);
 		regulator_disable(data->hd3ss3220vdd);
 		regulator_put(data->hd3ss3220vdd);
 		kfree(data);
