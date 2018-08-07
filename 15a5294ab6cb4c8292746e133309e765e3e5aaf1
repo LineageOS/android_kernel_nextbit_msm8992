@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab5f0d16_4439619d",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-07T23:12:13Z",
+      "side": 1,
+      "message": "Maybe should be a warning, not error?",
+      "range": {
+        "startLine": 65,
+        "startChar": 2,
+        "endLine": 65,
+        "endChar": 8
+      },
+      "revId": "15a5294ab6cb4c8292746e133309e765e3e5aaf1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e0cb86ba_2f367d1b",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-07T23:12:13Z",
+      "side": 1,
+      "message": "Maybe usleep_range since you\u0027re only going for 20ms. See: https://www.kernel.org/doc/Documentation/timers/timers-howto.txt",
+      "range": {
+        "startLine": 67,
+        "startChar": 2,
+        "endLine": 67,
+        "endChar": 8
+      },
+      "revId": "15a5294ab6cb4c8292746e133309e765e3e5aaf1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cee8bbbf_50c78461",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-07T23:12:13Z",
+      "side": 1,
+      "message": "same stuff here",
+      "range": {
+        "startLine": 82,
+        "startChar": 2,
+        "endLine": 85,
+        "endChar": 13
+      },
+      "revId": "15a5294ab6cb4c8292746e133309e765e3e5aaf1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3a30a8f8_a77be267",
+        "filename": "drivers/usb/hd3ss3220/hd3ss3220.c",
+        "patchSetId": 10
+      },
+      "lineNbr": 148,
+      "author": {
+        "id": 2936
+      },
+      "writtenOn": "2018-08-07T23:12:13Z",
+      "side": 1,
+      "message": "Shouldn\u0027t you be scheduling this around line 180 or so? Either that, or it might be better to do i2c_set_clientdata earlier. I don\u0027t think it actually causes issues, but it does read weirdly.",
+      "range": {
+        "startLine": 146,
+        "startChar": 1,
+        "endLine": 148,
+        "endChar": 43
+      },
+      "revId": "15a5294ab6cb4c8292746e133309e765e3e5aaf1",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
