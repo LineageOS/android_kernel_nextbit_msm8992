@@ -49,6 +49,14 @@ static void write_hd3ss3220_mode(struct work_struct *work)
 	u8 msg_buf[2];
 	int i, ret = 0;
 
+	/* Enable the 3.3V supply for I2C I/O */
+	ret = regulator_enable(data->hd3ss3220vdd);
+	if (ret) {
+		pr_err("%s: Failed to enable hd3ss3220vdd supply err=%d\n",
+				__func__, ret);
+		return;
+	}
+
 	/* Setup the read msg */
 	msg_buf[0] = 0x0A;
 	msg.flags = I2C_M_RD;
@@ -83,6 +91,9 @@ static void write_hd3ss3220_mode(struct work_struct *work)
 				ret, i);
 		msleep(20);
 	}
+
+	/* Disable the 3.3V supply for I2C I/O */
+	regulator_disable(data->hd3ss3220vdd);
 }
 
 static irqreturn_t hd3ss3220_irq_handler(int irq, void *data)
@@ -116,12 +127,6 @@ static int hd3ss3220_i2c_probe(struct i2c_client *client,
 		pr_err("%s: Failed to get hd3ss3220vdd supply err=%d\n",
 				__func__, ret);
 		goto err_hd3ss3220vdd_reg_get;
-	}
-	ret = regulator_enable(data->hd3ss3220vdd);
-	if (ret) {
-		pr_err("%s: Failed to enable hd3ss3220vdd supply err=%d\n",
-				__func__, ret);
-		goto err_hd3ss3220vdd_reg_en;
 	}
 
 	/* Setup I2C messages for writing device mode */
@@ -169,8 +174,6 @@ err_irq_failed:
 	gpio_free(data->gpio);
 err_gpio_failed:
 	cancel_work_sync(&data->hd3ss3220_mode_work);
-	regulator_disable(data->hd3ss3220vdd);
-err_hd3ss3220vdd_reg_en:
 	regulator_put(data->hd3ss3220vdd);
 err_hd3ss3220vdd_reg_get:
 	kfree(data);
@@ -186,7 +189,6 @@ static int hd3ss3220_i2c_remove(struct i2c_client *client)
 		cancel_work_sync(&data->hd3ss3220_mode_work);
 		free_irq(data->irq, &client->dev);
 		gpio_free(data->gpio);
-		regulator_disable(data->hd3ss3220vdd);
 		regulator_put(data->hd3ss3220vdd);
 		kfree(data);
 	}
