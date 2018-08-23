@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 The CyanogenMod Project
+ * Copyright (c) 2018 The LineageOS Project
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -31,7 +32,7 @@
  * several new controls in /sys/class/graphics/fbX based on the
  * configuration in the devicetree.
  *
- * rgb: Always available with MDSS. Used for color temperature and
+ * FIXME (rgb): Always available with MDSS. Used for color temperature and
  *      user-level calibration. Takes a string of "r g b".
  *
  * cabc: Content Adaptive Backlight Control. Must be configured
@@ -123,18 +124,45 @@ exit_free:
 	return -ENOMEM;
 }
 
+static inline void calc_matrix_value(uint32_t *a, uint32_t b)
+{
+	if (b)
+		*a = *a ? (*a * b / 32768) : b;
+}
+
+
+static void mdss_livedisplay_update_matrix_locked(struct msm_fb_data_type *mfd)
+{
+	uint8_t level, r, c;
+        struct mdss_livedisplay_ctx *mlc;
+
+        mlc = get_ctx(mfd);
+
+        if (mlc == NULL)
+                return -ENODEV;
+
+	memcpy(mlc->matrix, mlc->matrices[0], sizeof(color_matrix));
+
+	for (level = 1; level < MAX_MATRICES; level++) {
+		for (r = 0; r < 3; r++) {
+			for (c = 0; c < 3; c++) {
+				calc_matrix_value(&mlc->matrix[r][c],
+						mlc->matrices[level][r][c]);
+			}
+		}
+	}
+
+
+	if (!memcmp(&mlc->matrix, empty_matrix, sizeof(color_matrix)))
+		memcpy(mlc->matrix, default_matrix, sizeof(color_matrix));
+
+	return 0;
+}
+
 /**
- * simple color temperature interface using polynomial color correction
- *
- * input values are r/g/b adjustments from 0-32768 representing 0 -> 1
- *
- * example adjustment @ 3500K:
- * 1.0000 / 0.5515 / 0.2520 = 32768 / 25828 / 17347
- *
- * reference chart:
- * http://www.vendian.org/mncharity/dir3/blackbody/UnstableURLs/bbr_color.html
+ * simple color calibration interface using matrices
  */
-static int mdss_livedisplay_set_rgb_locked(struct msm_fb_data_type *mfd)
+static int mdss_livedisplay_set_matrix_locked(struct msm_fb_data_type *mfd)
 {
 	uint32_t copyback = 0;
 	static struct mdp_pcc_cfg_data pcc_cfg;
@@ -145,19 +173,23 @@ static int mdss_livedisplay_set_rgb_locked(struct msm_fb_data_type *mfd)
 	if (mlc == NULL)
 		return -ENODEV;
 
-	pr_info("%s: r=%d g=%d b=%d\n", __func__, mlc->r, mlc->g, mlc->b);
-
 	memset(&pcc_cfg, 0, sizeof(struct mdp_pcc_cfg_data));
 
 	pcc_cfg.block = mfd->index + MDP_LOGICAL_BLOCK_DISP_0;
-	if (mlc->r == 32768 && mlc->g == 32768 && mlc->b == 32768)
+	if (!memcmp(mlc->matrix, default_matrix, sizeof(color_matrix)))
 		pcc_cfg.ops = MDP_PP_OPS_DISABLE;
 	else
 		pcc_cfg.ops = MDP_PP_OPS_ENABLE;
 	pcc_cfg.ops |= MDP_PP_OPS_WRITE;
-	pcc_cfg.r.r = mlc->r;
-	pcc_cfg.g.g = mlc->g;
-	pcc_cfg.b.b = mlc->b;
+	pcc_cfg.r.r = mlc->matrix[0][0];
+	pcc_cfg.r.g = mlc->matrix[0][1];
+	pcc_cfg.r.b = mlc->matrix[0][2];
+	pcc_cfg.g.r = mlc->matrix[1][0];
+	pcc_cfg.g.g = mlc->matrix[1][1];
+	pcc_cfg.g.b = mlc->matrix[1][2];
+	pcc_cfg.b.b = mlc->matrix[2][0];
+	pcc_cfg.b.b = mlc->matrix[2][1];
+	pcc_cfg.b.b = mlc->matrix[2][2];
 
 	return mdss_mdp_pcc_config(&pcc_cfg, &copyback);
 }
@@ -279,8 +311,8 @@ static int mdss_livedisplay_update_locked(struct mdss_dsi_ctrl_pdata *ctrl_pdata
 
 	kfree(cmd_buf);
 
-	// Restore saved RGB settings
-	mdss_livedisplay_set_rgb_locked(mlc->mfd);
+	// Restore saved matrix settings
+	mdss_livedisplay_set_matrix_locked(mlc->mfd);
 
 	return ret;
 }
@@ -566,7 +598,7 @@ static ssize_t mdss_livedisplay_get_num_presets(struct device *dev,
 	return sprintf(buf, "%d\n", mlc->num_presets);
 }
 
-static ssize_t mdss_livedisplay_get_rgb(struct device *dev,
+static ssize_t mdss_livedisplay_get_matrix(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
 	struct fb_info *fbi = dev_get_drvdata(dev);
@@ -578,14 +610,18 @@ static ssize_t mdss_livedisplay_get_rgb(struct device *dev,
 
 	mlc = get_ctx(mfd);
 
-	return scnprintf(buf, PAGE_SIZE, "%d %d %d\n",
-			mlc->r, mlc->g, mlc->b);
+	return scnprintf(buf, PAGE_SIZE, "%d %d %d %d %d %d %d %d %d\n",
+			mlc->matrix[0][0], mlc->matrix[0][1], mlc->matrix[0][2],
+			mlc->matrix[1][0], mlc->matrix[1][1], mlc->matrix[1][2],
+			mlc->matrix[2][0], mlc->matrix[2][1], mlc->matrix[2][2]);
 }
 
-static ssize_t mdss_livedisplay_set_rgb(struct device *dev,
+static ssize_t mdss_livedisplay_set_matrix(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
-	uint32_t r = 0, g = 0, b = 0;
+	color_matrix matrix;
+	uint32_t level;
+	uint8_t r, c;
 	struct fb_info *fbi = dev_get_drvdata(dev);
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)fbi->par;
 	struct mdss_panel_data *pdata;
@@ -595,29 +631,41 @@ static ssize_t mdss_livedisplay_set_rgb(struct device *dev,
 	if (mfd == NULL)
 		return -ENODEV;
 
-	if (count > 19)
+	if (count > 55)
 		return -EINVAL;
 
 	mlc = get_ctx(mfd);
 	pdata = dev_get_platdata(&mfd->pdev->dev);
 
-	sscanf(buf, "%d %d %d", &r, &g, &b);
+	memset(matrix, 0, sizeof(color_matrix));
 
-	if (r < 0 || r > 32768)
+	sscanf(buf, "%d %d %d %d %d %d %d %d %d %d", &level,
+			&matrix[0][0], &matrix[0][1], &matrix[0][2],
+			&matrix[1][0], &matrix[1][1], &matrix[1][2],
+			&matrix[2][0], &matrix[2][1], &matrix[2][2]);
+
+	if (level < 0 || level >= MAX_MATRICES)
 		return -EINVAL;
-	if (g < 0 || g > 32768)
-		return -EINVAL;
-	if (b < 0 || b > 32768)
-		return -EINVAL;
+
+	for (r = 0; r < 3; r++) {
+		for (c = 0; c < 3; c++) {
+			if (matrix[r][c] < 0 || matrix[r][c] > 32768)
+				return -EINVAL;
+		}
+	}
 
 	mutex_lock(&mlc->lock);
 
-	mlc->r = r;
-	mlc->g = g;
-	mlc->b = b;
+	for (r = 0; r < 3; r++) {
+		for (c = 0; c < 3; c++) {
+			mlc->matrices[level][r][c] = matrix[r][c];
+		}
+	}
+
+	mdss_livedisplay_update_matrix_locked(mfd);
 
 	if (!mdss_panel_is_power_on_interactive(mfd->panel_power_state) ||
-			(mdss_livedisplay_set_rgb_locked(mfd) == 0))
+			(!mdss_livedisplay_set_matrix_locked(mfd)))
 		ret = count;
 
 	mutex_unlock(&mlc->lock);
@@ -633,7 +681,7 @@ static DEVICE_ATTR(color_enhance, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_
 static DEVICE_ATTR(aco, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_aco, mdss_livedisplay_set_aco);
 static DEVICE_ATTR(preset, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_preset, mdss_livedisplay_set_preset);
 static DEVICE_ATTR(num_presets, S_IRUGO, mdss_livedisplay_get_num_presets, NULL);
-static DEVICE_ATTR(rgb, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_rgb, mdss_livedisplay_set_rgb);
+static DEVICE_ATTR(matrix, S_IRUGO | S_IWUSR | S_IWGRP, mdss_livedisplay_get_matrix, mdss_livedisplay_set_matrix);
 
 int mdss_livedisplay_parse_dt(struct device_node *np, struct mdss_panel_info *pinfo)
 {
@@ -710,7 +758,10 @@ int mdss_livedisplay_parse_dt(struct device_node *np, struct mdss_panel_info *pi
 	mlc->post_cmds = of_get_property(np,
 			"cm,mdss-livedisplay-post-cmd", &mlc->post_cmds_len);
 
-	mlc->r = mlc->g = mlc->b = 32768;
+	memcpy(mlc->matrix, default_matrix, sizeof(color_matrix));
+	for (i = 0; i < MAX_MATRICES; i++) {
+		memcpy(mlc->matrices[i], default_matrix, sizeof(color_matrix));
+	}
 
 	pinfo->livedisplay = mlc;
 	return 0;
@@ -724,7 +775,7 @@ int mdss_livedisplay_create_sysfs(struct msm_fb_data_type *mfd)
 	if (mlc == NULL)
 		return 0;
 
-	rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_rgb.attr);
+	rc = sysfs_create_file(&mfd->fbi->dev->kobj, &dev_attr_matrix.attr);
 	if (rc)
 		goto sysfs_err;
 
