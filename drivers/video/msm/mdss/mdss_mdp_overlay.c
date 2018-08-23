@@ -4393,7 +4393,9 @@ static int mdss_mdp_overlay_ioctl_handler(struct msm_fb_data_type *mfd,
 
 	switch (cmd) {
 	case MSMFB_MDP_PP:
+#if 0
 		ret = mdss_mdp_pp_ioctl(mfd, argp);
+#endif
 		break;
 
 	case MSMFB_HISTOGRAM_START:
