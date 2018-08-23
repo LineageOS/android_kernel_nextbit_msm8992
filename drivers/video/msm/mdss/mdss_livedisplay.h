@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 The CyanogenMod Project
+ * Copyright (c) 2018 The LineageOS Project
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,6 +22,22 @@
 #include "mdss_fb.h"
 
 #define MAX_PRESETS 10
+
+#define MAX_MATRICES 3
+
+typedef uint32_t color_matrix[3][3];
+
+static const color_matrix default_matrix = {
+        { 32768, 0, 0 },
+        { 0, 32768, 0 },
+        { 0, 0, 32768 }
+};
+
+static const color_matrix empty_matrix = {
+        { 0, 0, 0 },
+        { 0, 0, 0 },
+        { 0, 0, 0 }
+};
 
 struct mdss_livedisplay_ctx {
 	uint8_t cabc_ui_value;
@@ -58,7 +75,9 @@ struct mdss_livedisplay_ctx {
 	unsigned int num_presets;
 	unsigned int caps;
 
-	uint32_t r, g, b;
+	color_matrix matrices[MAX_MATRICES];
+	color_matrix matrix;
+
 	struct msm_fb_data_type *mfd;
 
 	struct mutex lock;
