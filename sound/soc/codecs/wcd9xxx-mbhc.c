@@ -5504,7 +5504,7 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 
 #ifdef CONFIG_MACH_FIH_NBQ
 		ret = snd_jack_set_key(mbhc->button_jack.jack,
-				       SND_JACK_BTN_1,
+				       SND_JACK_BTN_5,
 				       KEY_VOLUMEUP);
 		if (ret) {
 			pr_err("%s: Failed to set code for btn-1\n",
@@ -5512,7 +5512,7 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 			return ret;
 		}
 		ret = snd_jack_set_key(mbhc->button_jack.jack,
-				       SND_JACK_BTN_2,
+				       SND_JACK_BTN_7,
 				       KEY_VOLUMEDOWN);
 		if (ret) {
 			pr_err("%s: Failed to set code for btn-2\n",
