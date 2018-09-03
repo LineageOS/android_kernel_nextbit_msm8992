@@ -5,8 +5,10 @@ dtb-$(CONFIG_MACH_FIH_NBQ) += \
 	msm8992_nbq_evt15.dtb \
 	msm8992_nbq_evt1c.dtb \
 	msm8992_nbq_dvt.dtb \
+	msm8992_vzw_evt1.dtb \
 	msm8992_nbq_dvt2.dtb \
-	msm8992_nbq_pvt.dtb
+	msm8992_nbq_pvt.dtb \
+	msm8992_vzw_evt2.dtb
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)
