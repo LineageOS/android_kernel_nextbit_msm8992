@@ -30,10 +30,6 @@
 #include "mdss_debug.h"
 #include "mdss_livedisplay.h"
 
-/*FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade {*/
-extern ssize_t panel_print_status2(struct mdss_dsi_ctrl_pdata *ctrl_pdata);
-/*} FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade*/
-
 #define XO_CLK_RATE	19200000
 
 static struct dsi_drv_cm_data shared_ctrl_data;
@@ -900,10 +896,6 @@ static int mdss_dsi_unblank(struct mdss_panel_data *pdata)
 	}
 
 	mdss_livedisplay_update(ctrl_pdata, MODE_UPDATE_ALL);
-
-// FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade {
-	panel_print_status2(ctrl_pdata);
-//} FIH, Hubert, 20151127, use lcm regs (DBh) to work with TP FW upgrade
 
 error:
 	mdss_dsi_clk_ctrl(ctrl_pdata, DSI_ALL_CLKS, 0);
