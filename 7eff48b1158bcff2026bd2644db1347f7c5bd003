@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "7ffe35ba_4acdfbbb",
+        "filename": "drivers/video/msm/mdss/mdss_dsi_panel.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 429,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2018-09-03T19:47:28Z",
+      "side": 0,
+      "message": "I dunno, it\u0027s seemed fine for me. We can keep it if we want, but I haven\u0027t seen a desperate need for it.",
+      "parentUuid": "d540783c_c8e12085",
+      "revId": "7eff48b1158bcff2026bd2644db1347f7c5bd003",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "47fd70b9_98515ba7",
         "filename": "drivers/video/msm/mdss/mdss_dsi_panel.c",
         "patchSetId": 2
@@ -30,6 +48,24 @@
       "writtenOn": "2018-09-03T19:45:16Z",
       "side": 0,
       "message": "and this",
+      "revId": "7eff48b1158bcff2026bd2644db1347f7c5bd003",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fd9648b2_8f5b22b1",
+        "filename": "drivers/video/msm/mdss/mdss_dsi_panel.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 434,
+      "author": {
+        "id": 11801
+      },
+      "writtenOn": "2018-09-03T19:47:28Z",
+      "side": 0,
+      "message": "Same as above",
+      "parentUuid": "47fd70b9_98515ba7",
       "revId": "7eff48b1158bcff2026bd2644db1347f7c5bd003",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
       "unresolved": false
