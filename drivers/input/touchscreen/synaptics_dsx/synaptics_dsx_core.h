@@ -349,9 +349,7 @@ int synaptics_dsx_fw_updater(unsigned char *fw_data);
 int synaptics_dsx_get_dt_coords(struct device *dev, char *name,
 				struct synaptics_dsx_board_data *pdata,
 				struct device_node *node);
-/*  NBQ - EricHsieh - [06-41] - [Touch] Update Synaptics touch firmware */
-int synaptics_test_reset_device(struct synaptics_rmi4_data *rmi4_data);
-/* end  NBQ - EricHsieh - [06-41] */
+
 static inline int synaptics_rmi4_reg_read(
 		struct synaptics_rmi4_data *rmi4_data,
 		unsigned short addr,
