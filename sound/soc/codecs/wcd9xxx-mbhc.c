@@ -5502,25 +5502,6 @@ int wcd9xxx_mbhc_init(struct wcd9xxx_mbhc *mbhc, struct wcd9xxx_resmgr *resmgr,
 			return ret;
 		}
 
-#ifdef CONFIG_MACH_FIH_NBQ
-		ret = snd_jack_set_key(mbhc->button_jack.jack,
-				       SND_JACK_BTN_1,
-				       KEY_VOLUMEUP);
-		if (ret) {
-			pr_err("%s: Failed to set code for btn-1\n",
-				__func__);
-			return ret;
-		}
-		ret = snd_jack_set_key(mbhc->button_jack.jack,
-				       SND_JACK_BTN_2,
-				       KEY_VOLUMEDOWN);
-		if (ret) {
-			pr_err("%s: Failed to set code for btn-2\n",
-				__func__);
-			return ret;
-		}
-#endif
-
 		set_bit(INPUT_PROP_NO_DUMMY_RELEASE,
 			mbhc->button_jack.jack->input_dev->propbit);
 
