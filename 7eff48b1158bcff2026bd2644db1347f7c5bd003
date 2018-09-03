@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d540783c_c8e12085",
+        "filename": "drivers/video/msm/mdss/mdss_dsi_panel.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 429,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2018-09-03T19:45:16Z",
+      "side": 0,
+      "message": "Not sure you should remove this",
+      "revId": "7eff48b1158bcff2026bd2644db1347f7c5bd003",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "47fd70b9_98515ba7",
+        "filename": "drivers/video/msm/mdss/mdss_dsi_panel.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 434,
+      "author": {
+        "id": 4550
+      },
+      "writtenOn": "2018-09-03T19:45:16Z",
+      "side": 0,
+      "message": "and this",
+      "revId": "7eff48b1158bcff2026bd2644db1347f7c5bd003",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": false
+    }
+  ]
+}
