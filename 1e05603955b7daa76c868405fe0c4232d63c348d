@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9c01bf29_dedd2c73",
+        "filename": "arch/arm64/configs/lineageos_ether_defconfig",
+        "patchSetId": 2
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 3917
+      },
+      "writtenOn": "2021-02-21T19:07:40Z",
+      "side": 1,
+      "message": "This looks odd",
+      "range": {
+        "startLine": 122,
+        "startChar": 0,
+        "endLine": 122,
+        "endChar": 32
+      },
+      "revId": "1e05603955b7daa76c868405fe0c4232d63c348d",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71",
+      "unresolved": true
+    }
+  ]
+}
